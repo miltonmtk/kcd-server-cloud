@@ -1,4 +1,5 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_file
+from kcd_orquestador import generar_reporte_pdf_real
 
 app = Flask(__name__)
 
@@ -8,7 +9,8 @@ def home():
 
 @app.route('/ejecutar')
 def ejecutar():
-    return "Orquestador ejecutado correctamente"
+    generar_reporte_pdf_real()
+    return send_file("reporte_continuity_digital.pdf", as_attachment=True)
 
 # RUTA NUEVA: Fase P (Planear) del PHVA
 @app.route('/check-maintenance', methods=['GET'])
