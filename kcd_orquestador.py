@@ -134,6 +134,31 @@ def registrar_bitacora_kcd(datos, ivk, procesos_ram, diagnosticos_ram):
     print("\n[KCD BITÁCORA] Registro guardado en bitacora_kcd.csv")
 
 
+def registrar_accion_kcd(accion, resultado, detalle):
+    nombre_archivo = "acciones_kcd.csv"
+
+    existe_archivo = os.path.exists(nombre_archivo)
+
+    with open(nombre_archivo, mode="a", newline="", encoding="utf-8") as archivo:
+        escritor = csv.writer(archivo)
+
+        if not existe_archivo:
+            escritor.writerow([
+                "fecha_hora",
+                "accion",
+                "resultado",
+                "detalle"
+            ])
+
+        escritor.writerow([
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            accion,
+            resultado,
+            detalle
+        ])
+
+    print(f"\n[KCD ACCIÓN] {accion} registrada.")
+
 def analizar_tendencias_kcd():
     nombre_archivo = "bitacora_kcd.csv"
 
@@ -397,9 +422,16 @@ generar_recomendaciones_kcd(
     ivk,
     procesos_ram
 )
-evaluar_temporales_kcd()
 
 mostrar_beneficios_kcd(
     datos,
     ivk
+)
+
+temporales = evaluar_temporales_kcd()
+
+registrar_accion_kcd(
+    "EVALUACION_TEMPORALES",
+    "OK",
+    f"{temporales['archivos']} archivos detectados; {temporales['mb']} MB recuperables"
 )
