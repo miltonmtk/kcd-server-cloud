@@ -182,6 +182,38 @@ def generar_recomendaciones_kcd(datos, ivk, procesos_ram):
 
     return recomendaciones
 
+def mostrar_beneficios_kcd(datos, ivk):
+    beneficios = []
+
+    if datos["ram"] > 80:
+        beneficios.append(
+            "Mayor velocidad en multitarea."
+        )
+
+        beneficios.append(
+            "Menor espera al cambiar entre aplicaciones."
+        )
+
+    if ivk < 60:
+        beneficios.append(
+            "Mejor experiencia durante horas pico de trabajo."
+        )
+
+    if datos["disco"] > 80:
+        beneficios.append(
+            "Mayor disponibilidad de espacio para trabajo diario."
+        )
+
+    print("\n[KCD]")
+    print("KCD detectó una oportunidad para mejorar la velocidad de trabajo.\n")
+
+    print("BENEFICIOS\n")
+
+    for beneficio in beneficios:
+        print(f"✓ {beneficio}")
+
+    return beneficios
+
 def evaluar_temporales_kcd():
     carpeta_temp = tempfile.gettempdir()
 
@@ -209,6 +241,8 @@ def evaluar_temporales_kcd():
         "archivos": total_archivos,
         "mb": total_mb
     }
+
+
 
 def verificar_licencia_remota(clave_licencia, hardware_id):
     URL_API = "http://127.0.0.1:5000/api/validar-licencia"
@@ -364,3 +398,8 @@ generar_recomendaciones_kcd(
     procesos_ram
 )
 evaluar_temporales_kcd()
+
+mostrar_beneficios_kcd(
+    datos,
+    ivk
+)
