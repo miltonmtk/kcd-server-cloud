@@ -268,6 +268,41 @@ def evaluar_temporales_kcd():
     }
 
 
+def ejecutar_limpieza_temporales_kcd():
+    carpeta_temp = tempfile.gettempdir()
+    archivos_eliminados = 0
+    bytes_liberados = 0
+
+    for raiz, carpetas, archivos in os.walk(carpeta_temp):
+        for archivo in archivos:
+            ruta = os.path.join(raiz, archivo)
+
+            try:
+                tamano = os.path.getsize(ruta)
+                os.remove(ruta)
+
+                archivos_eliminados += 1
+                bytes_liberados += tamano
+
+            except:
+                pass
+
+    mb_liberados = round(bytes_liberados / 1024 / 1024, 2)
+
+    print("\n[KCD RESULTADOS]")
+    print(f"✓ Archivos temporales procesados: {archivos_eliminados}")
+    print(f"✓ Espacio recuperado: {mb_liberados} MB")
+
+    registrar_accion_kcd(
+        "LIMPIEZA_TEMPORALES",
+        "OK",
+        f"{archivos_eliminados} archivos procesados; {mb_liberados} MB recuperados"
+    )
+
+    return {
+        "archivos": archivos_eliminados,
+        "mb": mb_liberados
+    }
 
 def verificar_licencia_remota(clave_licencia, hardware_id):
     URL_API = "http://127.0.0.1:5000/api/validar-licencia"
@@ -435,3 +470,4 @@ registrar_accion_kcd(
     "OK",
     f"{temporales['archivos']} archivos detectados; {temporales['mb']} MB recuperables"
 )
+ejecutar_limpieza_temporales_kcd()
