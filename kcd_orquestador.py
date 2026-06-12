@@ -8,6 +8,8 @@ import warnings
 import requests
 import psutil
 from fpdf import FPDF
+import csv
+from datetime import datetime
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -89,6 +91,47 @@ def diagnosticar_estado_ram(ram, procesos):
         )
 
     return diagnosticos
+
+def registrar_bitacora_kcd(datos, ivk, procesos_ram, diagnosticos_ram):
+    nombre_archivo = "bitacora_kcd.csv"
+    existe_archivo = os.path.exists(nombre_archivo)
+
+    proceso_principal = procesos_ram[0] if procesos_ram else {
+        "nombre": "N/A",
+        "pid": "N/A",
+        "memoria_mb": 0
+    }
+
+    with open(nombre_archivo, mode="a", newline="", encoding="utf-8") as archivo:
+        escritor = csv.writer(archivo)
+
+        if not existe_archivo:
+            escritor.writerow([
+                "fecha_hora",
+                "cpu",
+                "ram",
+                "disco",
+                "ivk",
+                "proceso_principal",
+                "pid",
+                "memoria_mb",
+                "diagnostico"
+            ])
+
+        escritor.writerow([
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            datos["cpu"],
+            datos["ram"],
+            datos["disco"],
+            ivk,
+            proceso_principal["nombre"],
+            proceso_principal["pid"],
+            proceso_principal["memoria_mb"],
+            " | ".join(diagnosticos_ram)
+        ])
+
+    print("\n[KCD BITÁCORA] Registro guardado en bitacora_kcd.csv")
+
 
 def verificar_licencia_remota(clave_licencia, hardware_id):
     URL_API = "http://127.0.0.1:5000/api/validar-licencia"
@@ -228,3 +271,10 @@ if __name__ == '__main__':
     print("\n[KCD DIAGNÓSTICO RAM]")
     for diagnostico in diagnosticos_ram:
         print(f"- {diagnostico}")
+
+    registrar_bitacora_kcd(
+    datos,
+    ivk,
+    procesos_ram,
+    diagnosticos_ram
+)

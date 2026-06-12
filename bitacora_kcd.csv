@@ -1,0 +1,2 @@
+fecha_hora,cpu,ram,disco,ivk,proceso_principal,pid,memoria_mb,diagnostico
+2026-06-12 12:59:46,12.8,86.3,85.2,45,chrome.exe,14856,377.68,RAM en estado crítico: posible lentitud durante trabajo en hora pico. | Proceso con mayor consumo de RAM: chrome.exe (377.68 MB).
