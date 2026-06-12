@@ -45,6 +45,50 @@ def calcular_indice_velocidad(cpu, ram, disco):
     indice = 100 - penalizacion
     return max(indice, 0)
 
+def obtener_top_procesos_ram(limite=10):
+    procesos = []
+
+    for proc in psutil.process_iter(['pid', 'name', 'memory_info']):
+        try:
+            memoria_mb = proc.info['memory_info'].rss / 1024 / 1024
+
+            procesos.append({
+                "pid": proc.info['pid'],
+                "nombre": proc.info['name'],
+                "memoria_mb": round(memoria_mb, 2)
+            })
+
+        except (psutil.NoSuchProcess,
+                psutil.AccessDenied,
+                psutil.ZombieProcess):
+            pass
+
+    procesos.sort(
+        key=lambda x: x['memoria_mb'],
+        reverse=True
+    )
+
+    return procesos[:limite]
+
+
+def diagnosticar_estado_ram(ram, procesos):
+    diagnosticos = []
+
+    if ram > 85:
+        diagnosticos.append("RAM en estado crítico: posible lentitud durante trabajo en hora pico.")
+    elif ram > 75:
+        diagnosticos.append("RAM alta: el equipo puede presentar demoras al abrir programas o navegar.")
+    else:
+        diagnosticos.append("RAM en estado aceptable.")
+
+    if procesos:
+        proceso_mayor = procesos[0]
+        diagnosticos.append(
+            f"Proceso con mayor consumo de RAM: {proceso_mayor['nombre']} "
+            f"({proceso_mayor['memoria_mb']} MB)."
+        )
+
+    return diagnosticos
 
 def verificar_licencia_remota(clave_licencia, hardware_id):
     URL_API = "http://127.0.0.1:5000/api/validar-licencia"
@@ -165,3 +209,22 @@ if __name__ == '__main__':
     )
 
     print(f"\n[IVK] Índice de Velocidad KCD: {ivk}%")
+
+    procesos_ram = obtener_top_procesos_ram()
+
+    print("\n[KCD LAB-02] TOP PROCESOS POR RAM")
+    for proceso in procesos_ram:
+        print(
+            f"{proceso['nombre']} | "
+            f"PID {proceso['pid']} | "
+            f"{proceso['memoria_mb']} MB"
+        )
+
+    diagnosticos_ram = diagnosticar_estado_ram(
+        datos["ram"],
+        procesos_ram
+    )
+
+    print("\n[KCD DIAGNÓSTICO RAM]")
+    for diagnostico in diagnosticos_ram:
+        print(f"- {diagnostico}")
