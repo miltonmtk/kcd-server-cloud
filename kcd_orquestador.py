@@ -133,6 +133,31 @@ def registrar_bitacora_kcd(datos, ivk, procesos_ram, diagnosticos_ram):
     print("\n[KCD BITÁCORA] Registro guardado en bitacora_kcd.csv")
 
 
+def analizar_tendencias_kcd():
+    nombre_archivo = "bitacora_kcd.csv"
+
+    if not os.path.exists(nombre_archivo):
+        print("\n[KCD TENDENCIAS] No existe bitácora.")
+        return
+
+    with open(nombre_archivo, mode="r", encoding="utf-8") as archivo:
+        lector = csv.DictReader(archivo)
+        registros = list(lector)
+
+    if not registros:
+        print("\n[KCD TENDENCIAS] No hay registros.")
+        return
+
+    ivks = [float(r["ivk"]) for r in registros]
+    rams = [float(r["ram"]) for r in registros]
+
+    print("\n[KCD TENDENCIAS]")
+    print(f"Registros analizados: {len(registros)}")
+    print(f"IVK promedio: {round(sum(ivks)/len(ivks), 2)}")
+    print(f"Mejor IVK: {max(ivks)}")
+    print(f"Peor IVK: {min(ivks)}")
+    print(f"RAM promedio: {round(sum(rams)/len(rams), 2)}%")
+
 def verificar_licencia_remota(clave_licencia, hardware_id):
     URL_API = "http://127.0.0.1:5000/api/validar-licencia"
     payload = {"licencia": clave_licencia, "hardware_id": hardware_id}
@@ -278,3 +303,5 @@ if __name__ == '__main__':
     procesos_ram,
     diagnosticos_ram
 )
+
+analizar_tendencias_kcd()
