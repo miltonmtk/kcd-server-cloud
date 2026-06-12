@@ -3,3 +3,5 @@ fecha_hora,accion,resultado,detalle
 2026-06-12 17:07:37,EVALUACION_TEMPORALES,OK,324 archivos detectados; 88.82 MB recuperables
 2026-06-12 17:38:32,EVALUACION_TEMPORALES,OK,324 archivos detectados; 88.83 MB recuperables
 2026-06-12 17:38:32,LIMPIEZA_TEMPORALES,OK,163 archivos procesados; 66.7 MB recuperados
+2026-06-12 17:42:12,EVALUACION_TEMPORALES,OK,162 archivos detectados; 22.13 MB recuperables
+2026-06-12 17:42:12,LIMPIEZA_TEMPORALES,OK,1 archivos procesados; 0.0 MB recuperados
