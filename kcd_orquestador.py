@@ -293,11 +293,7 @@ def ejecutar_limpieza_temporales_kcd():
     print(f"✓ Archivos temporales procesados: {archivos_eliminados}")
     print(f"✓ Espacio recuperado: {mb_liberados} MB")
 
-    registrar_accion_kcd(
-        "LIMPIEZA_TEMPORALES",
-        "OK",
-        f"{archivos_eliminados} archivos procesados; {mb_liberados} MB recuperados"
-    )
+    
 
     return {
         "archivos": archivos_eliminados,
@@ -465,9 +461,4 @@ mostrar_beneficios_kcd(
 
 temporales = evaluar_temporales_kcd()
 
-registrar_accion_kcd(
-    "EVALUACION_TEMPORALES",
-    "OK",
-    f"{temporales['archivos']} archivos detectados; {temporales['mb']} MB recuperables"
-)
 ejecutar_limpieza_temporales_kcd()
