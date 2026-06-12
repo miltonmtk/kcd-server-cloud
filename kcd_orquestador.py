@@ -7,6 +7,7 @@ import sys
 import warnings
 import requests
 import psutil
+import tempfile
 from fpdf import FPDF
 import csv
 from datetime import datetime
@@ -181,6 +182,34 @@ def generar_recomendaciones_kcd(datos, ivk, procesos_ram):
 
     return recomendaciones
 
+def evaluar_temporales_kcd():
+    carpeta_temp = tempfile.gettempdir()
+
+    total_archivos = 0
+    total_bytes = 0
+
+    for raiz, carpetas, archivos in os.walk(carpeta_temp):
+        for archivo in archivos:
+            try:
+                ruta = os.path.join(raiz, archivo)
+
+                total_archivos += 1
+                total_bytes += os.path.getsize(ruta)
+
+            except:
+                pass
+
+    total_mb = round(total_bytes / 1024 / 1024, 2)
+
+    print("\n[KCD LAB-05A] EVALUACIÓN DE TEMPORALES")
+    print(f"Archivos temporales detectados: {total_archivos}")
+    print(f"Espacio recuperable estimado: {total_mb} MB")
+
+    return {
+        "archivos": total_archivos,
+        "mb": total_mb
+    }
+
 def verificar_licencia_remota(clave_licencia, hardware_id):
     URL_API = "http://127.0.0.1:5000/api/validar-licencia"
     payload = {"licencia": clave_licencia, "hardware_id": hardware_id}
@@ -334,3 +363,4 @@ generar_recomendaciones_kcd(
     ivk,
     procesos_ram
 )
+evaluar_temporales_kcd()
