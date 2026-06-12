@@ -158,6 +158,29 @@ def analizar_tendencias_kcd():
     print(f"Peor IVK: {min(ivks)}")
     print(f"RAM promedio: {round(sum(rams)/len(rams), 2)}%")
 
+def generar_recomendaciones_kcd(datos, ivk, procesos_ram):
+    recomendaciones = []
+
+    proceso_principal = procesos_ram[0] if procesos_ram else None
+
+    if datos["ram"] > 85:
+        recomendaciones.append("RAM crítica: cerrar programas o pestañas no esenciales.")
+
+    if proceso_principal and "chrome" in proceso_principal["nombre"].lower():
+        recomendaciones.append("Chrome consume más RAM: cerrar pestañas inactivas o reiniciar navegador.")
+
+    if datos["disco"] > 80:
+        recomendaciones.append("Disco alto: liberar espacio eliminando temporales y descargas innecesarias.")
+
+    if ivk < 50:
+        recomendaciones.append("IVK bajo: ejecutar optimización preventiva.")
+
+    print("\n[KCD LAB-04] RECOMENDACIONES INTELIGENTES")
+    for recomendacion in recomendaciones:
+        print(f"- {recomendacion}")
+
+    return recomendaciones
+
 def verificar_licencia_remota(clave_licencia, hardware_id):
     URL_API = "http://127.0.0.1:5000/api/validar-licencia"
     payload = {"licencia": clave_licencia, "hardware_id": hardware_id}
@@ -305,3 +328,9 @@ if __name__ == '__main__':
 )
 
 analizar_tendencias_kcd()
+
+generar_recomendaciones_kcd(
+    datos,
+    ivk,
+    procesos_ram
+)
