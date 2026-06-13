@@ -73,6 +73,55 @@ def obtener_top_procesos_ram(limite=10):
 
     return procesos[:limite]
 
+def analizar_chrome_kcd():
+    procesos_chrome = []
+
+    for proc in psutil.process_iter(['pid', 'name', 'memory_info']):
+        try:
+            nombre = proc.info['name'] or ""
+
+            if "chrome" in nombre.lower():
+                memoria_mb = proc.info['memory_info'].rss / 1024 / 1024
+
+                procesos_chrome.append({
+                    "pid": proc.info['pid'],
+                    "nombre": nombre,
+                    "memoria_mb": round(memoria_mb, 2)
+                })
+
+        except (psutil.NoSuchProcess,
+                psutil.AccessDenied,
+                psutil.ZombieProcess):
+            pass
+
+    procesos_chrome.sort(
+        key=lambda x: x["memoria_mb"],
+        reverse=True
+    )
+
+    total_mb = round(
+        sum(p["memoria_mb"] for p in procesos_chrome),
+        2
+    )
+
+    proceso_principal = procesos_chrome[0] if procesos_chrome else None
+
+    print("\n[KCD LAB-07A] ANÁLISIS DE CHROME")
+    print(f"Procesos Chrome activos: {len(procesos_chrome)}")
+    print(f"RAM total usada por Chrome: {total_mb} MB")
+
+    if proceso_principal:
+        print(
+            f"Proceso Chrome principal: PID {proceso_principal['pid']} "
+            f"| {proceso_principal['memoria_mb']} MB"
+        )
+
+    return {
+        "procesos": procesos_chrome,
+        "total_mb": total_mb,
+        "principal": proceso_principal
+    }
+
 
 def diagnosticar_estado_ram(ram, procesos):
     diagnosticos = []
@@ -462,3 +511,5 @@ mostrar_beneficios_kcd(
 temporales = evaluar_temporales_kcd()
 
 ejecutar_limpieza_temporales_kcd()
+
+analizar_chrome_kcd()
