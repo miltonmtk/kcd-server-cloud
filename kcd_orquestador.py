@@ -116,12 +116,60 @@ def analizar_chrome_kcd():
             f"| {proceso_principal['memoria_mb']} MB"
         )
 
-    return {
+        return {
         "procesos": procesos_chrome,
         "total_mb": total_mb,
         "principal": proceso_principal
     }
 
+def clasificar_subprocesos_chrome_kcd():
+    categorias = {
+        "principal": 0,
+        "gpu": 0,
+        "red": 0,
+        "almacenamiento": 0,
+        "renderizadores": 0,
+        "extensiones": 0,
+        "fallos": 0,
+        "otros": 0
+    }
+
+    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+        try:
+            nombre = proc.info['name'] or ""
+
+            if "chrome" not in nombre.lower():
+                continue
+
+            cmdline = " ".join(proc.info['cmdline'] or []).lower()
+
+            if "--type=gpu-process" in cmdline:
+                categorias["gpu"] += 1
+            elif "networkservice" in cmdline or "network.mojom" in cmdline:
+                categorias["red"] += 1
+            elif "storageservice" in cmdline or "storage.mojom" in cmdline:
+                categorias["almacenamiento"] += 1
+            elif "--extension-process" in cmdline:
+                categorias["extensiones"] += 1
+            elif "crashpad-handler" in cmdline:
+                categorias["fallos"] += 1
+            elif "--type=renderer" in cmdline:
+                categorias["renderizadores"] += 1
+            elif "chrome.exe" in cmdline and "--type=" not in cmdline:
+                categorias["principal"] += 1
+            else:
+                categorias["otros"] += 1
+
+        except (psutil.NoSuchProcess,
+                psutil.AccessDenied,
+                psutil.ZombieProcess):
+            pass
+
+    print("\n[KCD LAB-07B] CLASIFICACIÓN CHROME")
+    for categoria, cantidad in categorias.items():
+        print(f"{categoria}: {cantidad}")
+
+    return categorias
 
 def diagnosticar_estado_ram(ram, procesos):
     diagnosticos = []
@@ -207,6 +255,46 @@ def registrar_accion_kcd(accion, resultado, detalle):
         ])
 
     print(f"\n[KCD ACCIÓN] {accion} registrada.")
+
+def registrar_evidencia_chrome_kcd(
+    total_mb,
+    categorias
+):
+    nombre_archivo = "evidencia_chrome_kcd.csv"
+
+    existe_archivo = os.path.exists(nombre_archivo)
+
+    with open(nombre_archivo,
+              mode="a",
+              newline="",
+              encoding="utf-8") as archivo:
+
+        escritor = csv.writer(archivo)
+
+        if not existe_archivo:
+            escritor.writerow([
+                "fecha_hora",
+                "ram_total_chrome",
+                "procesos_chrome",
+                "renderizadores",
+                "extensiones",
+                "gpu",
+                "red",
+                "almacenamiento"
+            ])
+
+        escritor.writerow([
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            total_mb,
+            sum(categorias.values()),
+            categorias["renderizadores"],
+            categorias["extensiones"],
+            categorias["gpu"],
+            categorias["red"],
+            categorias["almacenamiento"]
+        ])
+
+    print("\n[KCD EVIDENCIA] Evidencia Chrome registrada.")
 
 def analizar_tendencias_kcd():
     nombre_archivo = "bitacora_kcd.csv"
@@ -512,4 +600,11 @@ temporales = evaluar_temporales_kcd()
 
 ejecutar_limpieza_temporales_kcd()
 
-analizar_chrome_kcd()
+datos_chrome = analizar_chrome_kcd()
+
+categorias_chrome = clasificar_subprocesos_chrome_kcd()
+
+registrar_evidencia_chrome_kcd(
+    datos_chrome["total_mb"],
+    categorias_chrome
+)
