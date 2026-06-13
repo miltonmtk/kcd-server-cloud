@@ -15,6 +15,7 @@ import warnings
 import requests
 import psutil
 import tempfile
+import platform
 from fpdf import FPDF
 import csv
 from datetime import datetime
@@ -502,7 +503,44 @@ def ejecutar_limpieza_temporales_kcd():
 # ==============================================================================
 # BLOQUE 7.0 - SEGURIDAD Y LICENCIAMIENTO
 # ==============================================================================
-#
+def crear_identidad_kcd():
+
+    nombre_archivo = "identidad_kcd.csv"
+
+    if os.path.exists(nombre_archivo):
+        return
+
+    fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    kcd_id = "KCD-2026-000001"
+
+    with open(
+        nombre_archivo,
+        mode="w",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.writer(archivo)
+
+        escritor.writerow([
+            "kcd_id",
+            "fecha_activacion",
+            "version_kcd",
+            "equipo"
+        ])
+
+        escritor.writerow([
+            kcd_id,
+            fecha,
+            "LAB-09A",
+            platform.node()
+        ])
+
+    print("\n[KCD ID]")
+    print(f"Identidad creada: {kcd_id}")
+
+
 # 7.1 Validación remota de licencia
 #
 # ==============================================================================
@@ -626,6 +664,8 @@ if __name__ == '__main__':
     LICENCIA_ACTUAL = "KCD-COLOMBIA-2026"
     HARDWARE_ID_ACTUAL = "LAPTOP-MILTON-01"
 
+    crear_identidad_kcd()
+
     print("[PROCESO]: Solicitando verificacion de credenciales al servidor...")
 
     # Laboratorio: licencia desactivada temporalmente
@@ -662,34 +702,34 @@ if __name__ == '__main__':
         print(f"- {diagnostico}")
 
     registrar_bitacora_kcd(
-    datos,
-    ivk,
-    procesos_ram,
-    diagnosticos_ram
-)
+        datos,
+        ivk,
+        procesos_ram,
+        diagnosticos_ram
+    )
 
-analizar_tendencias_kcd()
+    analizar_tendencias_kcd()
 
-generar_recomendaciones_kcd(
-    datos,
-    ivk,
-    procesos_ram
-)
+    generar_recomendaciones_kcd(
+        datos,
+        ivk,
+        procesos_ram
+    )
 
-mostrar_beneficios_kcd(
-    datos,
-    ivk
-)
+    mostrar_beneficios_kcd(
+        datos,
+        ivk
+    )
 
-temporales = evaluar_temporales_kcd()
+    temporales = evaluar_temporales_kcd()
 
-ejecutar_limpieza_temporales_kcd()
+    ejecutar_limpieza_temporales_kcd()
 
-datos_chrome = analizar_chrome_kcd()
+    datos_chrome = analizar_chrome_kcd()
 
-categorias_chrome = clasificar_subprocesos_chrome_kcd()
+    categorias_chrome = clasificar_subprocesos_chrome_kcd()
 
-registrar_evidencia_chrome_kcd(
-    datos_chrome["total_mb"],
-    categorias_chrome
-)
+    registrar_evidencia_chrome_kcd(
+        datos_chrome["total_mb"],
+        categorias_chrome
+    )
