@@ -1,7 +1,14 @@
 # ==============================================================================
 # ESCUDO KCD - ORQUESTADOR DE PRODUCCIÓN PREMIUM
 # ==============================================================================
-
+# ==============================================================================
+# BLOQUE 0.0 - CONFIGURACIÓN GENERAL
+# ==============================================================================
+#
+# 0.1 Imports
+# 0.2 Configuración global
+#
+# ==============================================================================
 import os
 import sys
 import warnings
@@ -15,7 +22,14 @@ from datetime import datetime
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 
-
+# ==============================================================================
+# BLOQUE 1.0 - MOTOR IVK
+# ==============================================================================
+#
+# 1.1 Medición de recursos
+# 1.2 Cálculo del Índice de Velocidad KCD
+#
+# ==============================================================================
 def medir_velocidad_kcd():
     cpu = psutil.cpu_percent(interval=1)
     ram = psutil.virtual_memory().percent
@@ -48,6 +62,15 @@ def calcular_indice_velocidad(cpu, ram, disco):
     indice = 100 - penalizacion
     return max(indice, 0)
 
+# ==============================================================================
+# BLOQUE 2.0 - DIAGNÓSTICO DE MEMORIA
+# ==============================================================================
+#
+# 2.1 Top procesos por RAM
+# 2.2 Diagnóstico de memoria
+#
+# ==============================================================================
+
 def obtener_top_procesos_ram(limite=10):
     procesos = []
 
@@ -72,6 +95,16 @@ def obtener_top_procesos_ram(limite=10):
     )
 
     return procesos[:limite]
+
+# ==============================================================================
+# BLOQUE 3.0 - CHROME INTELIGENTE
+# ==============================================================================
+#
+# 3.1 Análisis Chrome
+# 3.2 Clasificación de subprocesos
+# 3.3 Evidencia histórica Chrome
+#
+# ==============================================================================
 
 def analizar_chrome_kcd():
     procesos_chrome = []
@@ -190,6 +223,16 @@ def diagnosticar_estado_ram(ram, procesos):
 
     return diagnosticos
 
+# ==============================================================================
+# BLOQUE 4.0 - BITÁCORAS Y AUDITORÍA
+# ==============================================================================
+#
+# 4.1 Bitácora general KCD
+# 4.2 Registro de acciones
+# 4.3 Evidencia histórica
+#
+# ==============================================================================
+
 def registrar_bitacora_kcd(datos, ivk, procesos_ram, diagnosticos_ram):
     nombre_archivo = "bitacora_kcd.csv"
     existe_archivo = os.path.exists(nombre_archivo)
@@ -296,6 +339,16 @@ def registrar_evidencia_chrome_kcd(
 
     print("\n[KCD EVIDENCIA] Evidencia Chrome registrada.")
 
+# ==============================================================================
+# BLOQUE 5.0 - ANALÍTICA KCD
+# ==============================================================================
+#
+# 5.1 Tendencias
+# 5.2 Recomendaciones inteligentes
+# 5.3 Beneficios para el cliente
+#
+# ==============================================================================
+
 def analizar_tendencias_kcd():
     nombre_archivo = "bitacora_kcd.csv"
 
@@ -376,6 +429,15 @@ def mostrar_beneficios_kcd(datos, ivk):
 
     return beneficios
 
+# ==============================================================================
+# BLOQUE 6.0 - OPTIMIZACIÓN DEL SISTEMA
+# ==============================================================================
+#
+# 6.1 Evaluación de temporales
+# 6.2 Limpieza de temporales
+#
+# ==============================================================================
+
 def evaluar_temporales_kcd():
     carpeta_temp = tempfile.gettempdir()
 
@@ -437,6 +499,14 @@ def ejecutar_limpieza_temporales_kcd():
         "mb": mb_liberados
     }
 
+# ==============================================================================
+# BLOQUE 7.0 - SEGURIDAD Y LICENCIAMIENTO
+# ==============================================================================
+#
+# 7.1 Validación remota de licencia
+#
+# ==============================================================================
+
 def verificar_licencia_remota(clave_licencia, hardware_id):
     URL_API = "http://127.0.0.1:5000/api/validar-licencia"
     payload = {"licencia": clave_licencia, "hardware_id": hardware_id}
@@ -456,6 +526,14 @@ def verificar_licencia_remota(clave_licencia, hardware_id):
         print("\n[KCD ERROR CRÍTICO]: No se pudo conectar con la API de licencias.")
         return False
 
+# ==============================================================================
+# BLOQUE 8.0 - REPORTES PDF
+# ==============================================================================
+#
+# 8.1 Clase PDF KCD
+# 8.2 Generador de informes
+#
+# ==============================================================================
 
 class PDF_KCD(FPDF):
     def header(self):
@@ -536,6 +614,13 @@ def generar_reporte_pdf_real():
 
     return True
 
+# ==============================================================================
+# BLOQUE 9.0 - ORQUESTADOR PRINCIPAL
+# ==============================================================================
+#
+# 9.1 Flujo principal de ejecución
+#
+# ==============================================================================
 
 if __name__ == '__main__':
     LICENCIA_ACTUAL = "KCD-COLOMBIA-2026"
