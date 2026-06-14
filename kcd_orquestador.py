@@ -546,6 +546,46 @@ def crear_identidad_kcd():
     print("\n[KCD ID]")
     print(f"Identidad creada: {kcd_id}")
 
+def crear_cliente_kcd():
+    nombre_archivo = "clientes_kcd.csv"
+
+    if os.path.exists(nombre_archivo):
+        return
+
+    cliente_id = "CLI-000001"
+    nombre_cliente = "MILTON MONTAÑO"
+    tipo_cliente = "INDEPENDIENTE"
+    estado_cliente = "ACTIVO"
+    fecha_registro = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    with open(
+        nombre_archivo,
+        mode="w",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.writer(archivo)
+
+        escritor.writerow([
+            "cliente_id",
+            "nombre_cliente",
+            "tipo_cliente",
+            "estado_cliente",
+            "fecha_registro"
+        ])
+
+        escritor.writerow([
+            cliente_id,
+            nombre_cliente,
+            tipo_cliente,
+            estado_cliente,
+            fecha_registro
+        ])
+
+    print("\n[KCD CLIENTE]")
+    print(f"Cliente creado: {cliente_id} | {nombre_cliente}")
+
 
 # 7.1 Validación remota de licencia
 #
@@ -671,6 +711,7 @@ if __name__ == '__main__':
     HARDWARE_ID_ACTUAL = "LAPTOP-MILTON-01"
 
     crear_identidad_kcd()
+    crear_cliente_kcd()
 
     print("[PROCESO]: Solicitando verificacion de credenciales al servidor...")
 
