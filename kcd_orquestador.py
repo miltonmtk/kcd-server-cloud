@@ -528,14 +528,18 @@ def crear_identidad_kcd():
             "fecha_activacion",
             "version_kcd",
 	    "estado_kcd",
+	    "administrador_id",
+            "nombre_administrador",
             "equipo"
         ])
 
         escritor.writerow([
             kcd_id,
             fecha,
-	    "LAB-09B",
+	    "LAB-09C",
             "ACTIVO",
+            "ADM-000001",
+            "MILTON MONTAÑO",
             platform.node()
         ])
 
