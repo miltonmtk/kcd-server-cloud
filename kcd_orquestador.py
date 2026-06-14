@@ -499,7 +499,47 @@ def ejecutar_limpieza_temporales_kcd():
         "archivos": archivos_eliminados,
         "mb": mb_liberados
     }
+# ------------------------------------------------------------------------------
+# 6.3 Salud del disco
+# ------------------------------------------------------------------------------
 
+def analizar_salud_disco_kcd():
+
+    uso = psutil.disk_usage('/')
+
+    total_gb = round(uso.total / (1024 ** 3), 2)
+    usado_gb = round(uso.used / (1024 ** 3), 2)
+    libre_gb = round(uso.free / (1024 ** 3), 2)
+
+    porcentaje_libre = round(
+        (uso.free / uso.total) * 100,
+        2
+    )
+
+    print("\n[KCD LAB-08A] SALUD DEL DISCO")
+    print(f"Capacidad total: {total_gb} GB")
+    print(f"Espacio usado: {usado_gb} GB")
+    print(f"Espacio libre: {libre_gb} GB")
+    print(f"Libre: {porcentaje_libre}%")
+
+    if porcentaje_libre < 10:
+        estado = "CRÍTICO"
+    elif porcentaje_libre < 20:
+        estado = "ALTO RIESGO"
+    elif porcentaje_libre < 30:
+        estado = "PREVENTIVO"
+    else:
+        estado = "SALUDABLE"
+
+    print(f"Estado del disco: {estado}")
+
+    return {
+        "total_gb": total_gb,
+        "usado_gb": usado_gb,
+        "libre_gb": libre_gb,
+        "porcentaje_libre": porcentaje_libre,
+        "estado": estado
+    }
 # ==============================================================================
 # BLOQUE 7.0 - SEGURIDAD Y LICENCIAMIENTO
 # ==============================================================================
@@ -586,6 +626,40 @@ def crear_cliente_kcd():
     print("\n[KCD CLIENTE]")
     print(f"Cliente creado: {cliente_id} | {nombre_cliente}")
 
+def crear_organizacion_kcd():
+
+    nombre_archivo = "organizaciones_kcd.csv"
+
+    if os.path.exists(nombre_archivo):
+        return
+
+    with open(
+        nombre_archivo,
+        mode="w",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.writer(archivo)
+
+        escritor.writerow([
+            "organizacion_id",
+            "cliente_id",
+            "nombre_organizacion",
+            "estado_organizacion",
+            "fecha_registro"
+        ])
+
+        escritor.writerow([
+            "ORG-000001",
+            "CLI-000001",
+            "SALAMANDRA",
+            "ACTIVO",
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        ])
+
+    print("\n[KCD ORGANIZACIÓN]")
+    print("Organización creada: ORG-000001 | SALAMANDRA")
 
 # 7.1 Validación remota de licencia
 #
@@ -711,7 +785,10 @@ if __name__ == '__main__':
     HARDWARE_ID_ACTUAL = "LAPTOP-MILTON-01"
 
     crear_identidad_kcd()
+
     crear_cliente_kcd()
+
+    crear_organizacion_kcd()
 
     print("[PROCESO]: Solicitando verificacion de credenciales al servidor...")
 
@@ -771,6 +848,8 @@ if __name__ == '__main__':
     temporales = evaluar_temporales_kcd()
 
     ejecutar_limpieza_temporales_kcd()
+
+    analizar_salud_disco_kcd()
 
     datos_chrome = analizar_chrome_kcd()
 
