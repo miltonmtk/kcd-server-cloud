@@ -1,2 +1,2 @@
-kcd_id,fecha_activacion,version_kcd,equipo
-KCD-2026-000001,2026-06-13 23:55:16,LAB-09A,LAPTOP-2LR6M0J1
+kcd_id,fecha_activacion,version_kcd,estado_kcd,equipo
+KCD-2026-000001,2026-06-14 13:35:26,LAB-09B,ACTIVO,LAPTOP-2LR6M0J1

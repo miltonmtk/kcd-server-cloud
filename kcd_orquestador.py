@@ -534,7 +534,8 @@ def crear_identidad_kcd():
         escritor.writerow([
             kcd_id,
             fecha,
-            "LAB-09A",
+	    "LAB-09B",
+            "ACTIVO",
             platform.node()
         ])
 
