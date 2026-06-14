@@ -527,6 +527,7 @@ def crear_identidad_kcd():
             "kcd_id",
             "fecha_activacion",
             "version_kcd",
+	    "estado_kcd",
             "equipo"
         ])
 
