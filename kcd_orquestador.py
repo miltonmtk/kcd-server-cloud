@@ -540,6 +540,65 @@ def analizar_salud_disco_kcd():
         "porcentaje_libre": porcentaje_libre,
         "estado": estado
     }
+
+# ------------------------------------------------------------------------------
+# 6.4 Programas de inicio automático
+# ------------------------------------------------------------------------------
+
+def analizar_inicio_windows_kcd():
+
+    print("\n[KCD LAB-08B] PROGRAMAS DE INICIO")
+
+    try:
+
+        import winreg
+
+        rutas = [
+            (
+                winreg.HKEY_CURRENT_USER,
+                r"Software\Microsoft\Windows\CurrentVersion\Run"
+            ),
+            (
+                winreg.HKEY_LOCAL_MACHINE,
+                r"Software\Microsoft\Windows\CurrentVersion\Run"
+            )
+        ]
+
+        total = 0
+
+        for raiz, ruta in rutas:
+
+            try:
+
+                clave = winreg.OpenKey(raiz, ruta)
+
+                cantidad = winreg.QueryInfoKey(clave)[1]
+
+                for i in range(cantidad):
+
+                    nombre, valor, _ = winreg.EnumValue(clave, i)
+
+                    total += 1
+
+                    print(f"{total}. {nombre}")
+
+            except Exception:
+                pass
+
+        print(f"\nProgramas detectados: {total}")
+
+        if total >= 20:
+            print("Estado: ALTO IMPACTO EN ARRANQUE")
+
+        elif total >= 10:
+            print("Estado: IMPACTO MODERADO")
+
+        else:
+            print("Estado: ARRANQUE SALUDABLE")
+
+    except Exception as error:
+
+        print(f"Error: {error}")
 # ==============================================================================
 # BLOQUE 7.0 - SEGURIDAD Y LICENCIAMIENTO
 # ==============================================================================
@@ -850,6 +909,8 @@ if __name__ == '__main__':
     ejecutar_limpieza_temporales_kcd()
 
     analizar_salud_disco_kcd()
+    
+    analizar_inicio_windows_kcd()
 
     datos_chrome = analizar_chrome_kcd()
 
