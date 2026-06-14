@@ -599,6 +599,49 @@ def analizar_inicio_windows_kcd():
     except Exception as error:
 
         print(f"Error: {error}")
+
+# ------------------------------------------------------------------------------
+# 6.5 Inventario técnico del equipo
+# ------------------------------------------------------------------------------
+
+def inventario_tecnico_kcd():
+
+    print("\n[KCD LAB-08C] INVENTARIO TÉCNICO")
+
+    equipo = platform.node()
+
+    sistema = platform.system()
+
+    version = platform.release()
+
+    procesador = platform.processor()
+
+    nucleos_fisicos = psutil.cpu_count(logical=False)
+
+    nucleos_logicos = psutil.cpu_count(logical=True)
+
+    ram_total = round(
+        psutil.virtual_memory().total / (1024 ** 3),
+        2
+    )
+
+    print(f"Equipo: {equipo}")
+    print(f"Sistema operativo: {sistema}")
+    print(f"Versión: {version}")
+    print(f"Procesador: {procesador}")
+    print(f"Núcleos físicos: {nucleos_fisicos}")
+    print(f"Núcleos lógicos: {nucleos_logicos}")
+    print(f"RAM instalada: {ram_total} GB")
+
+    return {
+        "equipo": equipo,
+        "sistema": sistema,
+        "version": version,
+        "procesador": procesador,
+        "nucleos_fisicos": nucleos_fisicos,
+        "nucleos_logicos": nucleos_logicos,
+        "ram_total": ram_total
+    }
 # ==============================================================================
 # BLOQUE 7.0 - SEGURIDAD Y LICENCIAMIENTO
 # ==============================================================================
