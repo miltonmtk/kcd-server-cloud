@@ -18,6 +18,7 @@ import tempfile
 import platform
 from fpdf import FPDF
 import csv
+import time
 from datetime import datetime
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -801,6 +802,74 @@ def analizar_servicios_kcd():
         print(f"Error: {error}")
 
         return None
+
+# ------------------------------------------------------------------------------
+# 6.9 Rendimiento básico del disco
+# ------------------------------------------------------------------------------
+
+def analizar_rendimiento_disco_kcd():
+
+    print("\n[KCD LAB-08G] RENDIMIENTO DEL DISCO")
+
+    archivo_prueba = "kcd_test.tmp"
+
+    tamaño_mb = 10
+
+    datos = os.urandom(
+        tamaño_mb * 1024 * 1024
+    )
+
+    inicio = time.time()
+
+    with open(archivo_prueba, "wb") as archivo:
+        archivo.write(datos)
+
+    tiempo_escritura = time.time() - inicio
+
+    inicio = time.time()
+
+    with open(archivo_prueba, "rb") as archivo:
+        archivo.read()
+
+    tiempo_lectura = time.time() - inicio
+
+    os.remove(archivo_prueba)
+
+    velocidad_escritura = round(
+        tamaño_mb / tiempo_escritura,
+        2
+    )
+
+    velocidad_lectura = round(
+        tamaño_mb / tiempo_lectura,
+        2
+    )
+
+    print(
+        f"Escritura: {velocidad_escritura} MB/s"
+    )
+
+    print(
+        f"Lectura: {velocidad_lectura} MB/s"
+    )
+
+    if velocidad_lectura < 50:
+        estado = "RENDIMIENTO BAJO"
+
+    elif velocidad_lectura < 150:
+        estado = "RENDIMIENTO MODERADO"
+
+    else:
+        estado = "RENDIMIENTO ÓPTIMO"
+
+    print(f"Estado: {estado}")
+
+    return {
+        "lectura": velocidad_lectura,
+        "escritura": velocidad_escritura,
+        "estado": estado
+    }
+
 # ==============================================================================
 # BLOQUE 7.0 - SEGURIDAD Y LICENCIAMIENTO
 # ==============================================================================
@@ -1121,6 +1190,8 @@ if __name__ == '__main__':
     analizar_espacio_usuario_kcd()
 
     analizar_servicios_kcd()
+
+    analizar_rendimiento_disco_kcd()
 
     datos_chrome = analizar_chrome_kcd()
 
