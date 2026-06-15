@@ -742,6 +742,65 @@ def analizar_espacio_usuario_kcd():
         print(f"{nombre}: {total_gb} GB")
 
     return resultados
+
+# ------------------------------------------------------------------------------
+# 6.8 Servicios activos del sistema
+# ------------------------------------------------------------------------------
+
+def analizar_servicios_kcd():
+
+    print("\n[KCD LAB-08F] SERVICIOS ACTIVOS")
+
+    servicios_activos = []
+
+    try:
+
+        for servicio in psutil.win_service_iter():
+
+            try:
+
+                info = servicio.as_dict()
+
+                if info["status"] == "running":
+
+                    servicios_activos.append(
+                        info["name"]
+                    )
+
+            except Exception:
+                pass
+
+        total = len(servicios_activos)
+
+        print(f"Servicios activos detectados: {total}")
+
+        print("\nPrimeros 10 servicios:")
+
+        for servicio in servicios_activos[:10]:
+
+            print(f"- {servicio}")
+
+        if total >= 200:
+            estado = "ALTO CONSUMO"
+
+        elif total >= 120:
+            estado = "MODERADO"
+
+        else:
+            estado = "SALUDABLE"
+
+        print(f"\nEstado: {estado}")
+
+        return {
+            "total": total,
+            "estado": estado
+        }
+
+    except Exception as error:
+
+        print(f"Error: {error}")
+
+        return None
 # ==============================================================================
 # BLOQUE 7.0 - SEGURIDAD Y LICENCIAMIENTO
 # ==============================================================================
@@ -1060,6 +1119,8 @@ if __name__ == '__main__':
     analizar_uptime_kcd()
 
     analizar_espacio_usuario_kcd()
+
+    analizar_servicios_kcd()
 
     datos_chrome = analizar_chrome_kcd()
 
