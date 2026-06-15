@@ -642,6 +642,53 @@ def inventario_tecnico_kcd():
         "nucleos_logicos": nucleos_logicos,
         "ram_total": ram_total
     }
+
+# ------------------------------------------------------------------------------
+# 6.6 Tiempo de actividad del sistema
+# ------------------------------------------------------------------------------
+
+def analizar_uptime_kcd():
+
+    print("\n[KCD LAB-08D] TIEMPO DE ACTIVIDAD")
+
+    tiempo_arranque = datetime.fromtimestamp(
+        psutil.boot_time()
+    )
+
+    ahora = datetime.now()
+
+    tiempo_activo = ahora - tiempo_arranque
+
+    dias = tiempo_activo.days
+
+    horas = tiempo_activo.seconds // 3600
+
+    print(
+        f"Último arranque: "
+        f"{tiempo_arranque.strftime('%Y-%m-%d %H:%M:%S')}"
+    )
+
+    print(
+        f"Tiempo activo: "
+        f"{dias} días y {horas} horas"
+    )
+
+    if dias >= 30:
+        estado = "REINICIO RECOMENDADO"
+
+    elif dias >= 15:
+        estado = "PREVENTIVO"
+
+    else:
+        estado = "SALUDABLE"
+
+    print(f"Estado: {estado}")
+
+    return {
+        "dias": dias,
+        "horas": horas,
+        "estado": estado
+    }
 # ==============================================================================
 # BLOQUE 7.0 - SEGURIDAD Y LICENCIAMIENTO
 # ==============================================================================
@@ -958,6 +1005,8 @@ if __name__ == '__main__':
     inventario_tecnico_kcd()
 
     datos_chrome = analizar_chrome_kcd()
+
+    analizar_uptime_kcd()
 
     categorias_chrome = clasificar_subprocesos_chrome_kcd()
 
