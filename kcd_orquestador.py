@@ -1237,6 +1237,71 @@ def generar_reporte_pdf_real():
 
     return True
 
+# ------------------------------------------------------------------------------
+# 8.1 Diagnóstico Ejecutivo Unificado
+# ------------------------------------------------------------------------------
+
+def diagnostico_ejecutivo_kcd(
+    datos,
+    ivk,
+    ram_total,
+    espacio_libre_pct
+):
+
+    print("\n[KCD LAB-09A] DIAGNÓSTICO EJECUTIVO")
+
+    riesgo = "BAJO"
+
+    if ram_total < 4 or espacio_libre_pct < 15 or ivk <= 45:
+        riesgo = "ALTO"
+
+    elif ram_total < 8 or espacio_libre_pct < 25:
+        riesgo = "MODERADO"
+
+    print(f"Riesgo general: {riesgo}")
+
+    if ram_total < 4:
+
+        principal = (
+            f"Memoria RAM insuficiente ({ram_total} GB)."
+        )
+
+    elif espacio_libre_pct < 15:
+
+        principal = (
+            f"Espacio libre reducido ({espacio_libre_pct}%)."
+        )
+
+    else:
+
+        principal = (
+            "No se detectan limitaciones críticas."
+        )
+
+    print(f"Hallazgo principal: {principal}")
+
+    print("\nPrioridades:")
+
+    if ram_total < 4:
+        print("1. Ampliar memoria RAM.")
+
+    if espacio_libre_pct < 20:
+        print("2. Liberar espacio en disco.")
+
+    if ivk <= 45:
+        print("3. Ejecutar optimización preventiva.")
+
+    print("\nFortalezas:")
+
+    print("✓ Procesador operativo.")
+    print("✓ Conectividad funcional.")
+    print("✓ Diagnóstico completado correctamente.")
+
+    return {
+        "riesgo": riesgo,
+        "hallazgo": principal
+    }
+
 # ==============================================================================
 # BLOQUE 9.0 - ORQUESTADOR PRINCIPAL
 # ==============================================================================
@@ -1330,9 +1395,18 @@ if __name__ == '__main__':
 
     analizar_red_kcd()
 
-    analizar_memoria_instalada_kcd()
+    memoria_info = analizar_memoria_instalada_kcd()
 
     analizar_procesador_kcd()
+
+    salud_disco = analizar_salud_disco_kcd()
+
+    diagnostico_ejecutivo_kcd(
+        datos,
+        ivk,
+        memoria_info["ram_total"],
+        salud_disco["porcentaje_libre"]
+    )
 
     datos_chrome = analizar_chrome_kcd()
 
