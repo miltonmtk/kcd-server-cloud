@@ -954,6 +954,8 @@ if __name__ == '__main__':
     analizar_salud_disco_kcd()
     
     analizar_inicio_windows_kcd()
+    
+    inventario_tecnico_kcd()
 
     datos_chrome = analizar_chrome_kcd()
 
