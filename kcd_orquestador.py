@@ -689,6 +689,59 @@ def analizar_uptime_kcd():
         "horas": horas,
         "estado": estado
     }
+
+
+# ------------------------------------------------------------------------------
+# 6.7 Ocupación del espacio del usuario
+# ------------------------------------------------------------------------------
+
+def analizar_espacio_usuario_kcd():
+
+    print("\n[KCD LAB-08E] OCUPACIÓN DEL ESPACIO DEL USUARIO")
+
+    carpetas = {
+        "Escritorio": os.path.join(os.path.expanduser("~"), "Desktop"),
+        "Documentos": os.path.join(os.path.expanduser("~"), "Documents"),
+        "Descargas": os.path.join(os.path.expanduser("~"), "Downloads"),
+        "Imágenes": os.path.join(os.path.expanduser("~"), "Pictures"),
+        "Videos": os.path.join(os.path.expanduser("~"), "Videos")
+    }
+
+    resultados = {}
+
+    for nombre, ruta in carpetas.items():
+
+        total_bytes = 0
+
+        if os.path.exists(ruta):
+
+            for raiz, directorios, archivos in os.walk(ruta):
+
+                for archivo in archivos:
+
+                    try:
+                        archivo_completo = os.path.join(
+                            raiz,
+                            archivo
+                        )
+
+                        total_bytes += os.path.getsize(
+                            archivo_completo
+                        )
+
+                    except Exception:
+                        pass
+
+        total_gb = round(
+            total_bytes / (1024 ** 3),
+            2
+        )
+
+        resultados[nombre] = total_gb
+
+        print(f"{nombre}: {total_gb} GB")
+
+    return resultados
 # ==============================================================================
 # BLOQUE 7.0 - SEGURIDAD Y LICENCIAMIENTO
 # ==============================================================================
@@ -1004,9 +1057,13 @@ if __name__ == '__main__':
     
     inventario_tecnico_kcd()
 
+    analizar_uptime_kcd()
+
+    analizar_espacio_usuario_kcd()
+
     datos_chrome = analizar_chrome_kcd()
 
-    analizar_uptime_kcd()
+    
 
     categorias_chrome = clasificar_subprocesos_chrome_kcd()
 
