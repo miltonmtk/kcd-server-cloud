@@ -958,6 +958,53 @@ def analizar_memoria_instalada_kcd():
         "recomendacion": recomendacion
     }
 
+
+# ------------------------------------------------------------------------------
+# 6.12 Información y estado del procesador
+# ------------------------------------------------------------------------------
+
+def analizar_procesador_kcd():
+
+    print("\n[KCD LAB-08J] ANÁLISIS DEL PROCESADOR")
+
+    frecuencia = psutil.cpu_freq()
+
+    frecuencia_actual = round(
+        frecuencia.current,
+        2
+    )
+
+    frecuencia_maxima = round(
+        frecuencia.max,
+        2
+    )
+
+    uso_cpu = psutil.cpu_percent(interval=1)
+
+    print(f"Frecuencia actual: {frecuencia_actual} MHz")
+    print(f"Frecuencia máxima: {frecuencia_maxima} MHz")
+    print(f"Uso actual CPU: {uso_cpu}%")
+
+    if uso_cpu >= 80:
+
+        estado = "ALTA CARGA"
+
+    elif uso_cpu >= 50:
+
+        estado = "CARGA MODERADA"
+
+    else:
+
+        estado = "SALUDABLE"
+
+    print(f"Estado: {estado}")
+
+    return {
+        "frecuencia_actual": frecuencia_actual,
+        "frecuencia_maxima": frecuencia_maxima,
+        "uso_cpu": uso_cpu,
+        "estado": estado
+    }
 # ==============================================================================
 # BLOQUE 7.0 - SEGURIDAD Y LICENCIAMIENTO
 # ==============================================================================
@@ -1284,6 +1331,8 @@ if __name__ == '__main__':
     analizar_red_kcd()
 
     analizar_memoria_instalada_kcd()
+
+    analizar_procesador_kcd()
 
     datos_chrome = analizar_chrome_kcd()
 
