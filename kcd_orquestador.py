@@ -910,6 +910,53 @@ def analizar_red_kcd():
         "estado": estado
     }
 
+# ------------------------------------------------------------------------------
+# 6.11 Capacidad de memoria instalada
+# ------------------------------------------------------------------------------
+
+def analizar_memoria_instalada_kcd():
+
+    print("\n[KCD LAB-08I] CAPACIDAD DE MEMORIA")
+
+    ram_total = round(
+        psutil.virtual_memory().total / (1024 ** 3),
+        2
+    )
+
+    print(f"RAM instalada: {ram_total} GB")
+
+    if ram_total < 4:
+
+        estado = "INSUFICIENTE"
+
+        recomendacion = (
+            "Se recomienda ampliar memoria RAM."
+        )
+
+    elif ram_total < 8:
+
+        estado = "LIMITADA"
+
+        recomendacion = (
+            "Adecuada para tareas básicas."
+        )
+
+    else:
+
+        estado = "ADECUADA"
+
+        recomendacion = (
+            "Capacidad apropiada para multitarea."
+        )
+
+    print(f"Estado: {estado}")
+    print(f"Recomendación: {recomendacion}")
+
+    return {
+        "ram_total": ram_total,
+        "estado": estado,
+        "recomendacion": recomendacion
+    }
 
 # ==============================================================================
 # BLOQUE 7.0 - SEGURIDAD Y LICENCIAMIENTO
@@ -1235,6 +1282,8 @@ if __name__ == '__main__':
     analizar_rendimiento_disco_kcd()
 
     analizar_red_kcd()
+
+    analizar_memoria_instalada_kcd()
 
     datos_chrome = analizar_chrome_kcd()
 
