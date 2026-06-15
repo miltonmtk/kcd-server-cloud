@@ -812,7 +812,6 @@ def analizar_rendimiento_disco_kcd():
     print("\n[KCD LAB-08G] RENDIMIENTO DEL DISCO")
 
     archivo_prueba = "kcd_test.tmp"
-
     tamaño_mb = 10
 
     datos = os.urandom(
@@ -833,6 +832,12 @@ def analizar_rendimiento_disco_kcd():
 
     tiempo_lectura = time.time() - inicio
 
+    if tiempo_lectura == 0:
+        tiempo_lectura = 0.001
+
+    if tiempo_escritura == 0:
+        tiempo_escritura = 0.001
+
     os.remove(archivo_prueba)
 
     velocidad_escritura = round(
@@ -845,13 +850,8 @@ def analizar_rendimiento_disco_kcd():
         2
     )
 
-    print(
-        f"Escritura: {velocidad_escritura} MB/s"
-    )
-
-    print(
-        f"Lectura: {velocidad_lectura} MB/s"
-    )
+    print(f"Escritura: {velocidad_escritura} MB/s")
+    print(f"Lectura: {velocidad_lectura} MB/s")
 
     if velocidad_lectura < 50:
         estado = "RENDIMIENTO BAJO"
@@ -869,6 +869,47 @@ def analizar_rendimiento_disco_kcd():
         "escritura": velocidad_escritura,
         "estado": estado
     }
+
+
+# ------------------------------------------------------------------------------
+# 6.10 Red y conectividad
+# ------------------------------------------------------------------------------
+
+def analizar_red_kcd():
+
+    print("\n[KCD LAB-08H] RED Y CONECTIVIDAD")
+
+    import socket
+
+    nombre_host = socket.gethostname()
+
+    try:
+        ip_local = socket.gethostbyname(nombre_host)
+    except Exception:
+        ip_local = "No detectada"
+
+    print(f"Nombre del equipo en red: {nombre_host}")
+    print(f"IP local: {ip_local}")
+
+    try:
+        socket.create_connection(
+            ("8.8.8.8", 53),
+            timeout=3
+        )
+
+        estado = "CONECTADO"
+
+    except Exception:
+        estado = "SIN CONEXIÓN"
+
+    print(f"Estado de conectividad: {estado}")
+
+    return {
+        "host": nombre_host,
+        "ip_local": ip_local,
+        "estado": estado
+    }
+
 
 # ==============================================================================
 # BLOQUE 7.0 - SEGURIDAD Y LICENCIAMIENTO
@@ -1192,6 +1233,8 @@ if __name__ == '__main__':
     analizar_servicios_kcd()
 
     analizar_rendimiento_disco_kcd()
+
+    analizar_red_kcd()
 
     datos_chrome = analizar_chrome_kcd()
 
