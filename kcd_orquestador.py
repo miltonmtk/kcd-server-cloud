@@ -3390,3 +3390,839 @@ def registrar_plan_accion_kcd(
     )
 
     return True
+# ==============================================================================
+# BLOQUE 11.0 - VALIDACION Y CERTIFICACION DE RESULTADOS KCD
+# ==============================================================================
+#
+# 11.1 Medicion ANTES con promedio
+# 11.2 Medicion DESPUES con promedio
+# 11.3 Comparacion de resultados
+# 11.4 Evaluacion de efectividad
+# 11.5 Evidencia CSV
+# 11.6 Mensaje claro para cliente
+# 11.7 Certificacion de efectividad KCD
+#
+# ==============================================================================
+
+def promedio_kcd(
+    valores
+):
+
+    if not valores:
+        return 0
+
+    return round(
+        sum(
+            valores
+        ) / len(
+            valores
+        ),
+        2
+    )
+
+
+def medir_estado_validacion_kcd(
+    etapa,
+    muestras=3,
+    intervalo_segundos=1
+):
+
+    print(
+        f"\n[KCD VALIDACION] Medicion {etapa} con promedio de {muestras} muestras."
+    )
+
+    mediciones_cpu = []
+    mediciones_ram = []
+    mediciones_disco = []
+    mediciones_espacio_libre = []
+    mediciones_ivk = []
+
+    ram_total_gb = round(
+        psutil.virtual_memory().total / (1024 ** 3),
+        2
+    )
+
+    for numero in range(
+        muestras
+    ):
+
+        datos = medir_velocidad_kcd()
+
+        ivk = calcular_indice_velocidad(
+            datos["cpu"],
+            datos["ram"],
+            datos["disco"]
+        )
+
+        disco = psutil.disk_usage(
+            "/"
+        )
+
+        espacio_libre_pct = round(
+            (disco.free / disco.total) * 100,
+            2
+        )
+
+        mediciones_cpu.append(
+            float(
+                datos.get(
+                    "cpu",
+                    0
+                )
+            )
+        )
+
+        mediciones_ram.append(
+            float(
+                datos.get(
+                    "ram",
+                    0
+                )
+            )
+        )
+
+        mediciones_disco.append(
+            float(
+                datos.get(
+                    "disco",
+                    0
+                )
+            )
+        )
+
+        mediciones_espacio_libre.append(
+            float(
+                espacio_libre_pct
+            )
+        )
+
+        mediciones_ivk.append(
+            float(
+                ivk
+            )
+        )
+
+        if numero < muestras - 1:
+
+            time.sleep(
+                intervalo_segundos
+            )
+
+    medicion = {
+        "etapa": etapa,
+        "fecha_hora": datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        "muestras": muestras,
+        "cpu": promedio_kcd(
+            mediciones_cpu
+        ),
+        "ram": promedio_kcd(
+            mediciones_ram
+        ),
+        "disco": promedio_kcd(
+            mediciones_disco
+        ),
+        "espacio_libre_pct": promedio_kcd(
+            mediciones_espacio_libre
+        ),
+        "ivk": promedio_kcd(
+            mediciones_ivk
+        ),
+        "ram_total_gb": ram_total_gb
+    }
+
+    print(
+        f"CPU promedio: {medicion['cpu']}%"
+    )
+
+    print(
+        f"RAM promedio: {medicion['ram']}%"
+    )
+
+    print(
+        f"Disco usado promedio: {medicion['disco']}%"
+    )
+
+    print(
+        f"Espacio libre promedio: {medicion['espacio_libre_pct']}%"
+    )
+
+    print(
+        f"IVK promedio: {medicion['ivk']}%"
+    )
+
+    print(
+        f"RAM instalada: {medicion['ram_total_gb']} GB"
+    )
+
+    return medicion
+
+
+def medir_antes_kcd(
+    accion_evaluada="PLAN_ACCION_KCD",
+    muestras=3
+):
+
+    print(
+        "\n[KCD LAB-11A] MEDICION ANTES"
+    )
+
+    medicion = medir_estado_validacion_kcd(
+        "ANTES",
+        muestras
+    )
+
+    medicion["accion_evaluada"] = accion_evaluada
+
+    return medicion
+
+
+def medir_despues_kcd(
+    accion_evaluada="PLAN_ACCION_KCD",
+    muestras=3
+):
+
+    print(
+        "\n[KCD LAB-11B] MEDICION DESPUES"
+    )
+
+    medicion = medir_estado_validacion_kcd(
+        "DESPUES",
+        muestras
+    )
+
+    medicion["accion_evaluada"] = accion_evaluada
+
+    return medicion
+
+
+def comparar_mediciones_kcd(
+    antes,
+    despues
+):
+
+    print(
+        "\n[KCD LAB-11C] COMPARACION DE RESULTADOS"
+    )
+
+    diferencia = {
+        "cambio_ivk": round(
+            despues["ivk"] - antes["ivk"],
+            2
+        ),
+        "cambio_cpu": round(
+            antes["cpu"] - despues["cpu"],
+            2
+        ),
+        "cambio_ram": round(
+            antes["ram"] - despues["ram"],
+            2
+        ),
+        "cambio_disco": round(
+            antes["disco"] - despues["disco"],
+            2
+        ),
+        "cambio_espacio_libre": round(
+            despues["espacio_libre_pct"] - antes["espacio_libre_pct"],
+            2
+        ),
+        "cambio_ram_total_gb": round(
+            despues["ram_total_gb"] - antes["ram_total_gb"],
+            2
+        )
+    }
+
+    print(
+        f"Cambio IVK: {diferencia['cambio_ivk']}"
+    )
+
+    print(
+        f"Cambio CPU: {diferencia['cambio_cpu']}"
+    )
+
+    print(
+        f"Cambio RAM: {diferencia['cambio_ram']}"
+    )
+
+    print(
+        f"Cambio disco usado: {diferencia['cambio_disco']}"
+    )
+
+    print(
+        f"Cambio espacio libre: {diferencia['cambio_espacio_libre']}"
+    )
+
+    print(
+        f"Cambio RAM instalada: {diferencia['cambio_ram_total_gb']} GB"
+    )
+
+    return diferencia
+
+
+def evaluar_efectividad_kcd(
+    diferencia
+):
+
+    print(
+        "\n[KCD LAB-11D] EVALUACION DE EFECTIVIDAD"
+    )
+
+    cambio_ivk = diferencia.get(
+        "cambio_ivk",
+        0
+    )
+
+    cambio_ram = diferencia.get(
+        "cambio_ram",
+        0
+    )
+
+    cambio_disco = diferencia.get(
+        "cambio_disco",
+        0
+    )
+
+    cambio_espacio_libre = diferencia.get(
+        "cambio_espacio_libre",
+        0
+    )
+
+    puntaje = 0
+
+    if cambio_ivk >= 8:
+        puntaje += 2
+
+    elif cambio_ivk >= 3:
+        puntaje += 1
+
+    if cambio_ram >= 8:
+        puntaje += 2
+
+    elif cambio_ram >= 3:
+        puntaje += 1
+
+    if cambio_disco >= 5:
+        puntaje += 2
+
+    elif cambio_disco >= 2:
+        puntaje += 1
+
+    if cambio_espacio_libre >= 5:
+        puntaje += 2
+
+    elif cambio_espacio_libre >= 2:
+        puntaje += 1
+
+    if (
+        cambio_ivk <= -5
+        or cambio_ram <= -8
+        or cambio_disco <= -5
+        or cambio_espacio_libre <= -5
+    ):
+
+        resultado = "EMPEORO"
+
+    elif puntaje >= 5:
+
+        resultado = "MEJORA ALTA"
+
+    elif puntaje >= 2:
+
+        resultado = "MEJORA MODERADA"
+
+    else:
+
+        resultado = "SIN CAMBIO"
+
+    print(
+        f"Resultado de efectividad: {resultado}"
+    )
+
+    return resultado
+
+
+def detectar_problema_estructural_kcd(
+    antes,
+    despues,
+    diferencia,
+    resultado
+):
+
+    ram_total = despues.get(
+        "ram_total_gb",
+        0
+    )
+
+    espacio_libre = despues.get(
+        "espacio_libre_pct",
+        100
+    )
+
+    cambio_ram_total = diferencia.get(
+        "cambio_ram_total_gb",
+        0
+    )
+
+    if (
+        ram_total < 4
+        and cambio_ram_total == 0
+        and resultado in [
+            "SIN CAMBIO",
+            "EMPEORO"
+        ]
+    ):
+
+        return {
+            "requiere_hardware": True,
+            "motivo": "La memoria RAM instalada es insuficiente y no puede corregirse por software."
+        }
+
+    if (
+        espacio_libre < 10
+        and resultado in [
+            "SIN CAMBIO",
+            "EMPEORO"
+        ]
+    ):
+
+        return {
+            "requiere_hardware": True,
+            "motivo": "El almacenamiento disponible sigue en nivel critico; puede requerir ampliacion o respaldo externo."
+        }
+
+    return {
+        "requiere_hardware": False,
+        "motivo": "No se detecta limitacion estructural obligatoria."
+    }
+
+
+def certificar_efectividad_kcd(
+    resultado,
+    antes,
+    despues,
+    diferencia
+):
+
+    print(
+        "\n[KCD LAB-11F] CERTIFICACION DE EFECTIVIDAD KCD"
+    )
+
+    diagnostico_estructural = detectar_problema_estructural_kcd(
+        antes,
+        despues,
+        diferencia,
+        resultado
+    )
+
+    if diagnostico_estructural["requiere_hardware"]:
+
+        certificacion = "REQUIERE HARDWARE"
+
+    elif resultado == "MEJORA ALTA":
+
+        certificacion = "EFECTIVO"
+
+    elif resultado == "MEJORA MODERADA":
+
+        certificacion = "PARCIALMENTE EFECTIVO"
+
+    elif resultado == "SIN CAMBIO":
+
+        certificacion = "NO EFECTIVO"
+
+    else:
+
+        certificacion = "NO EFECTIVO"
+
+    print(
+        f"Certificacion KCD: {certificacion}"
+    )
+
+    print(
+        f"Motivo: {diagnostico_estructural['motivo']}"
+    )
+
+    return {
+        "certificacion": certificacion,
+        "requiere_hardware": diagnostico_estructural["requiere_hardware"],
+        "motivo": diagnostico_estructural["motivo"]
+    }
+
+
+def generar_mensaje_cliente_kcd(
+    resultado,
+    diferencia,
+    certificacion
+):
+
+    cambio_ivk = diferencia.get(
+        "cambio_ivk",
+        0
+    )
+
+    cambio_ram = diferencia.get(
+        "cambio_ram",
+        0
+    )
+
+    cambio_disco = diferencia.get(
+        "cambio_disco",
+        0
+    )
+
+    cambio_espacio = diferencia.get(
+        "cambio_espacio_libre",
+        0
+    )
+
+    detalle = (
+        f"IVK cambio {cambio_ivk} puntos. "
+        f"RAM cambio {cambio_ram}%. "
+        f"Disco usado cambio {cambio_disco}%. "
+        f"Espacio libre cambio {cambio_espacio}%."
+    )
+
+    if certificacion["certificacion"] == "EFECTIVO":
+
+        mensaje = (
+            "KCD certifica que la intervencion fue efectiva. "
+            + detalle
+        )
+
+    elif certificacion["certificacion"] == "PARCIALMENTE EFECTIVO":
+
+        mensaje = (
+            "KCD certifica una mejora parcial. "
+            "Se recomienda continuar con mantenimiento preventivo. "
+            + detalle
+        )
+
+    elif certificacion["certificacion"] == "REQUIERE HARDWARE":
+
+        mensaje = (
+            "KCD detecta que la mejora por software es limitada. "
+            f"{certificacion['motivo']} "
+            + detalle
+        )
+
+    elif resultado == "EMPEORO":
+
+        mensaje = (
+            "KCD detecto empeoramiento posterior a la medicion. "
+            "Se recomienda revision tecnica antes de aplicar nuevas correcciones. "
+            + detalle
+        )
+
+    else:
+
+        mensaje = (
+            "KCD no detecto una mejora significativa. "
+            "Puede requerirse una accion adicional, revision tecnica o ajuste de hardware. "
+            + detalle
+        )
+
+    print(
+        "\n[KCD MENSAJE CLIENTE]"
+    )
+
+    print(
+        mensaje
+    )
+
+    return mensaje
+
+
+def registrar_validacion_resultados_kcd(
+    accion_evaluada,
+    antes,
+    despues,
+    diferencia,
+    resultado,
+    certificacion,
+    mensaje
+):
+
+    nombre_archivo = "validacion_resultados_kcd.csv"
+
+    existe_archivo = os.path.exists(
+        nombre_archivo
+    )
+
+    encabezados = [
+        "fecha_hora",
+        "accion_evaluada",
+        "resultado",
+        "certificacion",
+        "requiere_hardware",
+        "motivo_certificacion",
+        "mensaje_cliente",
+        "antes_fecha_hora",
+        "antes_muestras",
+        "antes_ivk",
+        "antes_cpu",
+        "antes_ram",
+        "antes_disco",
+        "antes_espacio_libre",
+        "antes_ram_total_gb",
+        "despues_fecha_hora",
+        "despues_muestras",
+        "despues_ivk",
+        "despues_cpu",
+        "despues_ram",
+        "despues_disco",
+        "despues_espacio_libre",
+        "despues_ram_total_gb",
+        "cambio_ivk",
+        "cambio_cpu",
+        "cambio_ram",
+        "cambio_disco",
+        "cambio_espacio_libre",
+        "cambio_ram_total_gb"
+    ]
+
+    fila = [
+        datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        accion_evaluada,
+        resultado,
+        certificacion.get(
+            "certificacion",
+            ""
+        ),
+        certificacion.get(
+            "requiere_hardware",
+            False
+        ),
+        certificacion.get(
+            "motivo",
+            ""
+        ),
+        mensaje,
+        antes.get(
+            "fecha_hora",
+            ""
+        ),
+        antes.get(
+            "muestras",
+            0
+        ),
+        antes.get(
+            "ivk",
+            0
+        ),
+        antes.get(
+            "cpu",
+            0
+        ),
+        antes.get(
+            "ram",
+            0
+        ),
+        antes.get(
+            "disco",
+            0
+        ),
+        antes.get(
+            "espacio_libre_pct",
+            0
+        ),
+        antes.get(
+            "ram_total_gb",
+            0
+        ),
+        despues.get(
+            "fecha_hora",
+            ""
+        ),
+        despues.get(
+            "muestras",
+            0
+        ),
+        despues.get(
+            "ivk",
+            0
+        ),
+        despues.get(
+            "cpu",
+            0
+        ),
+        despues.get(
+            "ram",
+            0
+        ),
+        despues.get(
+            "disco",
+            0
+        ),
+        despues.get(
+            "espacio_libre_pct",
+            0
+        ),
+        despues.get(
+            "ram_total_gb",
+            0
+        ),
+        diferencia.get(
+            "cambio_ivk",
+            0
+        ),
+        diferencia.get(
+            "cambio_cpu",
+            0
+        ),
+        diferencia.get(
+            "cambio_ram",
+            0
+        ),
+        diferencia.get(
+            "cambio_disco",
+            0
+        ),
+        diferencia.get(
+            "cambio_espacio_libre",
+            0
+        ),
+        diferencia.get(
+            "cambio_ram_total_gb",
+            0
+        )
+    ]
+
+    with open(
+        nombre_archivo,
+        mode="a",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.writer(
+            archivo
+        )
+
+        if not existe_archivo:
+
+            escritor.writerow(
+                encabezados
+            )
+
+        escritor.writerow(
+            fila
+        )
+
+    registrar_accion_kcd(
+        "VALIDACION_RESULTADOS",
+        certificacion.get(
+            "certificacion",
+            resultado
+        ),
+        accion_evaluada
+    )
+
+    print(
+        "\n[KCD LAB-11E] Evidencia de validacion registrada."
+    )
+
+    print(
+        f"Archivo: {nombre_archivo}"
+    )
+
+
+def validar_resultados_kcd(
+    antes,
+    accion_evaluada="PLAN_ACCION_KCD",
+    muestras=3
+):
+
+    print(
+        "\n[KCD LAB-11] VALIDACION DE RESULTADOS KCD"
+    )
+
+    if not antes:
+
+        print(
+            "\n[KCD VALIDACION] No existe medicion ANTES para comparar."
+        )
+
+        print(
+            "Ejecute primero medir_antes_kcd() antes de aplicar acciones."
+        )
+
+        return None
+
+    despues = medir_despues_kcd(
+        accion_evaluada,
+        muestras
+    )
+
+    diferencia = comparar_mediciones_kcd(
+        antes,
+        despues
+    )
+
+    resultado = evaluar_efectividad_kcd(
+        diferencia
+    )
+
+    certificacion = certificar_efectividad_kcd(
+        resultado,
+        antes,
+        despues,
+        diferencia
+    )
+
+    mensaje = generar_mensaje_cliente_kcd(
+        resultado,
+        diferencia,
+        certificacion
+    )
+
+    registrar_validacion_resultados_kcd(
+        accion_evaluada,
+        antes,
+        despues,
+        diferencia,
+        resultado,
+        certificacion,
+        mensaje
+    )
+
+    return {
+        "accion_evaluada": accion_evaluada,
+        "antes": antes,
+        "despues": despues,
+        "diferencia": diferencia,
+        "resultado": resultado,
+        "certificacion": certificacion,
+        "mensaje": mensaje
+    }
+
+
+def ejecutar_validacion_manual_kcd(
+    accion_evaluada="PLAN_ACCION_KCD",
+    muestras=3
+):
+
+    print(
+        "\n[KCD LAB-11 MANUAL] INICIO DE VALIDACION"
+    )
+
+    print(
+        "Paso 1: Se tomara medicion ANTES con promedio."
+    )
+
+    antes = medir_antes_kcd(
+        accion_evaluada,
+        muestras
+    )
+
+    print(
+        "\nPaso 2: Ejecute ahora las acciones del Bloque 10."
+    )
+
+    print(
+        "Paso 3: Luego llame validar_resultados_kcd(antes, accion_evaluada)."
+    )
+
+    return antes
