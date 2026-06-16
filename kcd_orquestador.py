@@ -5372,3 +5372,1239 @@ def ejecutar_monitoreo_continuo_kcd(
     generar_resumen_diario_alertas_kcd()
 
     return resumen
+
+
+# ==============================================================================
+# BLOQUE 13.0 - INTELIGENCIA PREDICTIVA KCD
+# ==============================================================================
+#
+# 13.1 Lectura de historicos KCD
+# 13.2 Analisis de tendencias
+# 13.3 Prediccion de riesgo
+# 13.4 Mantenimiento predictivo
+# 13.5 Registro de evidencia predictiva
+# 13.6 Factores estructurales directos
+#
+# ==============================================================================
+
+def leer_historico_csv_kcd(
+    nombre_archivo
+):
+
+    if not os.path.exists(
+        nombre_archivo
+    ):
+
+        print(
+            f"\n[KCD PREDICTIVO] No existe historico: {nombre_archivo}"
+        )
+
+        return []
+
+    registros = []
+
+    try:
+
+        with open(
+            nombre_archivo,
+            mode="r",
+            encoding="utf-8"
+        ) as archivo:
+
+            lector = csv.DictReader(
+                archivo
+            )
+
+            for fila in lector:
+
+                registros.append(
+                    fila
+                )
+
+    except Exception as error:
+
+        print(
+            f"\n[KCD ERROR] No se pudo leer {nombre_archivo}: {error}"
+        )
+
+        return []
+
+    return registros
+
+
+def convertir_float_kcd(
+    valor,
+    defecto=0
+):
+
+    try:
+
+        return float(
+            valor
+        )
+
+    except Exception:
+
+        return defecto
+
+
+def promedio_lista_kcd(
+    valores
+):
+
+    if not valores:
+
+        return 0
+
+    return round(
+        sum(
+            valores
+        ) / len(
+            valores
+        ),
+        2
+    )
+
+
+def parsear_fecha_kcd(
+    fecha_texto
+):
+
+    formatos = [
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d",
+        "%d/%m/%Y %H:%M:%S",
+        "%d/%m/%Y"
+    ]
+
+    for formato in formatos:
+
+        try:
+
+            return datetime.strptime(
+                fecha_texto,
+                formato
+            )
+
+        except Exception:
+
+            continue
+
+    return None
+
+
+def calcular_tendencia_kcd(
+    valores,
+    margen=1
+):
+
+    if len(
+        valores
+    ) < 2:
+
+        return {
+            "tendencia": "SIN_DATOS",
+            "cambio": 0,
+            "promedio_inicial": 0,
+            "promedio_final": 0
+        }
+
+    mitad = max(
+        1,
+        len(
+            valores
+        ) // 2
+    )
+
+    bloque_inicial = valores[
+        :mitad
+    ]
+
+    bloque_final = valores[
+        mitad:
+    ]
+
+    if not bloque_final:
+
+        bloque_final = valores[
+            -1:
+        ]
+
+    promedio_inicial = promedio_lista_kcd(
+        bloque_inicial
+    )
+
+    promedio_final = promedio_lista_kcd(
+        bloque_final
+    )
+
+    cambio = round(
+        promedio_final - promedio_inicial,
+        2
+    )
+
+    if cambio > margen:
+
+        tendencia = "SUBE"
+
+    elif cambio < -margen:
+
+        tendencia = "BAJA"
+
+    else:
+
+        tendencia = "SE_MANTIENE"
+
+    return {
+        "tendencia": tendencia,
+        "cambio": cambio,
+        "promedio_inicial": promedio_inicial,
+        "promedio_final": promedio_final
+    }
+
+
+def obtener_factores_estructurales_actuales_kcd():
+
+    try:
+
+        ram_total_gb = round(
+            psutil.virtual_memory().total / (1024 ** 3),
+            2
+        )
+
+    except Exception:
+
+        ram_total_gb = 0
+
+    try:
+
+        disco = psutil.disk_usage(
+            "/"
+        )
+
+        espacio_libre_pct = round(
+            (disco.free / disco.total) * 100,
+            2
+        )
+
+    except Exception:
+
+        espacio_libre_pct = 0
+
+    factores = {
+        "ram_total_gb": ram_total_gb,
+        "espacio_libre_pct": espacio_libre_pct,
+        "ram_estructural": ram_total_gb < 4,
+        "ram_limitada": ram_total_gb < 8,
+        "espacio_critico": espacio_libre_pct < 15,
+        "espacio_limitado": espacio_libre_pct < 25
+    }
+
+    print(
+        "\n[KCD PREDICTIVO] Factores estructurales actuales"
+    )
+
+    print(
+        f"RAM instalada: {factores['ram_total_gb']} GB"
+    )
+
+    print(
+        f"Espacio libre actual: {factores['espacio_libre_pct']}%"
+    )
+
+    return factores
+
+
+def analizar_bitacora_predictiva_kcd(
+    registros
+):
+
+    print(
+        "\n[KCD PREDICTIVO] Analizando bitacora_kcd.csv"
+    )
+
+    cpu = []
+    ram = []
+    disco = []
+    ivk = []
+
+    for fila in registros:
+
+        cpu.append(
+            convertir_float_kcd(
+                fila.get(
+                    "cpu",
+                    0
+                )
+            )
+        )
+
+        ram.append(
+            convertir_float_kcd(
+                fila.get(
+                    "ram",
+                    0
+                )
+            )
+        )
+
+        disco.append(
+            convertir_float_kcd(
+                fila.get(
+                    "disco",
+                    0
+                )
+            )
+        )
+
+        ivk.append(
+            convertir_float_kcd(
+                fila.get(
+                    "ivk",
+                    0
+                )
+            )
+        )
+
+    analisis = {
+        "registros": len(
+            registros
+        ),
+        "cpu_promedio": promedio_lista_kcd(
+            cpu
+        ),
+        "ram_promedio": promedio_lista_kcd(
+            ram
+        ),
+        "disco_promedio": promedio_lista_kcd(
+            disco
+        ),
+        "ivk_promedio": promedio_lista_kCD(
+            ivk
+        ) if False else promedio_lista_kcd(
+            ivk
+        ),
+        "tendencia_cpu": calcular_tendencia_kcd(
+            cpu
+        ),
+        "tendencia_ram": calcular_tendencia_kcd(
+            ram
+        ),
+        "tendencia_disco": calcular_tendencia_kcd(
+            disco
+        ),
+        "tendencia_ivk": calcular_tendencia_kcd(
+            ivk
+        )
+    }
+
+    print(
+        f"Registros bitacora: {analisis['registros']}"
+    )
+
+    print(
+        f"IVK tendencia: {analisis['tendencia_ivk']['tendencia']}"
+    )
+
+    print(
+        f"RAM tendencia: {analisis['tendencia_ram']['tendencia']}"
+    )
+
+    print(
+        f"Disco tendencia: {analisis['tendencia_disco']['tendencia']}"
+    )
+
+    return analisis
+
+
+def analizar_alertas_predictivas_kcd(
+    registros
+):
+
+    print(
+        "\n[KCD PREDICTIVO] Analizando alertas_kcd.csv"
+    )
+
+    registros_ordenados = []
+
+    for fila in registros:
+
+        fecha = parsear_fecha_kcd(
+            fila.get(
+                "fecha_hora",
+                ""
+            )
+        )
+
+        if fecha is None:
+
+            continue
+
+        fila["_fecha_parseada"] = fecha
+
+        registros_ordenados.append(
+            fila
+        )
+
+    registros_ordenados.sort(
+        key=lambda item: item["_fecha_parseada"]
+    )
+
+    total = len(
+        registros_ordenados
+    )
+
+    criticas = 0
+    altas = 0
+    moderadas = 0
+    bajas = 0
+
+    tipos = {}
+
+    pesos_temporales = []
+
+    for fila in registros_ordenados:
+
+        nivel = fila.get(
+            "nivel",
+            "BAJO"
+        )
+
+        tipo = fila.get(
+            "tipo",
+            "SIN_TIPO"
+        )
+
+        tipos[tipo] = tipos.get(
+            tipo,
+            0
+        ) + 1
+
+        if nivel == "CRITICO":
+
+            criticas += 1
+            peso = 4
+
+        elif nivel == "ALTO":
+
+            altas += 1
+            peso = 3
+
+        elif nivel == "MODERADO":
+
+            moderadas += 1
+            peso = 2
+
+        else:
+
+            bajas += 1
+            peso = 1
+
+        pesos_temporales.append(
+            peso
+        )
+
+    if total < 2:
+
+        tendencia_alertas = {
+            "tendencia": "SIN_DATOS",
+            "cambio": 0,
+            "promedio_inicial": 0,
+            "promedio_final": 0
+        }
+
+    else:
+
+        tendencia_alertas = calcular_tendencia_kcd(
+            pesos_temporales,
+            margen=0.5
+        )
+
+        if tendencia_alertas["tendencia"] == "SUBE":
+
+            tendencia_alertas["tendencia"] = "AUMENTAN"
+
+        elif tendencia_alertas["tendencia"] == "BAJA":
+
+            tendencia_alertas["tendencia"] = "DISMINUYEN"
+
+        else:
+
+            tendencia_alertas["tendencia"] = "SE_MANTIENEN"
+
+    analisis = {
+        "total_alertas": total,
+        "criticas": criticas,
+        "altas": altas,
+        "moderadas": moderadas,
+        "bajas": bajas,
+        "tipos": tipos,
+        "tendencia_alertas": tendencia_alertas
+    }
+
+    print(
+        f"Total alertas con fecha valida: {total}"
+    )
+
+    print(
+        f"Alertas criticas: {criticas}"
+    )
+
+    print(
+        f"Tendencia temporal de alertas: {tendencia_alertas['tendencia']}"
+    )
+
+    return analisis
+
+
+def analizar_validaciones_predictivas_kcd(
+    registros
+):
+
+    print(
+        "\n[KCD PREDICTIVO] Analizando validacion_resultados_kcd.csv"
+    )
+
+    total = len(
+        registros
+    )
+
+    efectivos = 0
+    parciales = 0
+    no_efectivos = 0
+    requieren_hardware = 0
+
+    ultimo_ram_total = 0
+    ultimo_espacio_libre = 0
+
+    for fila in registros:
+
+        certificacion = fila.get(
+            "certificacion",
+            ""
+        )
+
+        resultado = fila.get(
+            "resultado",
+            ""
+        )
+
+        ram_total = convertir_float_kcd(
+            fila.get(
+                "despues_ram_total_gb",
+                fila.get(
+                    "antes_ram_total_gb",
+                    0
+                )
+            )
+        )
+
+        espacio_libre = convertir_float_kcd(
+            fila.get(
+                "despues_espacio_libre",
+                fila.get(
+                    "antes_espacio_libre",
+                    0
+                )
+            )
+        )
+
+        if ram_total > 0:
+
+            ultimo_ram_total = ram_total
+
+        if espacio_libre > 0:
+
+            ultimo_espacio_libre = espacio_libre
+
+        if certificacion == "EFECTIVO":
+
+            efectivos += 1
+
+        elif certificacion == "PARCIALMENTE EFECTIVO":
+
+            parciales += 1
+
+        elif certificacion == "REQUIERE HARDWARE":
+
+            requieren_hardware += 1
+
+        elif (
+            certificacion == "NO EFECTIVO"
+            or resultado == "SIN CAMBIO"
+            or resultado == "EMPEORO"
+        ):
+
+            no_efectivos += 1
+
+    analisis = {
+        "total_validaciones": total,
+        "efectivos": efectivos,
+        "parciales": parciales,
+        "no_efectivos": no_efectivos,
+        "requieren_hardware": requieren_hardware,
+        "ultimo_ram_total_gb": ultimo_ram_total,
+        "ultimo_espacio_libre_pct": ultimo_espacio_libre
+    }
+
+    print(
+        f"Validaciones registradas: {total}"
+    )
+
+    print(
+        f"Efectivas: {efectivos}"
+    )
+
+    print(
+        f"No efectivas: {no_efectivos}"
+    )
+
+    print(
+        f"Requieren hardware: {requieren_hardware}"
+    )
+
+    return analisis
+
+
+def calcular_puntaje_riesgo_predictivo_kcd(
+    bitacora,
+    alertas,
+    validaciones,
+    estructural
+):
+
+    puntaje = 0
+    factores = []
+
+    if bitacora["registros"] > 0:
+
+        if bitacora["ivk_promedio"] <= 45:
+
+            puntaje += 5
+
+            factores.append(
+                "IVK promedio en zona critica."
+            )
+
+        elif bitacora["ivk_promedio"] <= 65:
+
+            puntaje += 2
+
+            factores.append(
+                "IVK promedio en zona preventiva."
+            )
+
+        if bitacora["tendencia_ivk"]["tendencia"] == "BAJA":
+
+            puntaje += 2
+
+            factores.append(
+                "El IVK presenta tendencia descendente."
+            )
+
+        if bitacora["ram_promedio"] >= 85:
+
+            puntaje += 3
+
+            factores.append(
+                "RAM promedio elevada."
+            )
+
+        elif bitacora["ram_promedio"] >= 75:
+
+            puntaje += 2
+
+            factores.append(
+                "RAM promedio en nivel de alerta."
+            )
+
+        if bitacora["tendencia_ram"]["tendencia"] == "SUBE":
+
+            puntaje += 2
+
+            factores.append(
+                "La RAM presenta tendencia de aumento."
+            )
+
+        if bitacora["disco_promedio"] >= 90:
+
+            puntaje += 3
+
+            factores.append(
+                "Disco promedio en zona critica."
+            )
+
+        elif bitacora["disco_promedio"] >= 80:
+
+            puntaje += 2
+
+            factores.append(
+                "Disco promedio en zona de alerta."
+            )
+
+        if bitacora["tendencia_disco"]["tendencia"] == "SUBE":
+
+            puntaje += 2
+
+            factores.append(
+                "El uso de disco presenta tendencia de aumento."
+            )
+
+    if alertas["total_alertas"] > 0:
+
+        if alertas["criticas"] > 0:
+
+            puntaje += 4
+
+            factores.append(
+                "Existen alertas criticas registradas."
+            )
+
+        elif alertas["altas"] > 0:
+
+            puntaje += 2
+
+            factores.append(
+                "Existen alertas altas registradas."
+            )
+
+        if alertas["tendencia_alertas"]["tendencia"] == "AUMENTAN":
+
+            puntaje += 2
+
+            factores.append(
+                "Las alertas aumentan temporalmente segun fecha y severidad."
+            )
+
+    if validaciones["total_validaciones"] > 0:
+
+        if validaciones["requieren_hardware"] > 0:
+
+            puntaje += 4
+
+            factores.append(
+                "Hay validaciones que requieren hardware."
+            )
+
+        if validaciones["no_efectivos"] > 0:
+
+            puntaje += 2
+
+            factores.append(
+                "Hay acciones no efectivas o sin mejora."
+            )
+
+    if estructural.get(
+        "ram_estructural",
+        False
+    ):
+
+        puntaje += 4
+
+        factores.append(
+            f"RAM instalada estructuralmente baja ({estructural['ram_total_gb']} GB)."
+        )
+
+    elif estructural.get(
+        "ram_limitada",
+        False
+    ):
+
+        puntaje += 2
+
+        factores.append(
+            f"RAM instalada limitada ({estructural['ram_total_gb']} GB)."
+        )
+
+    if estructural.get(
+        "espacio_critico",
+        False
+    ):
+
+        puntaje += 4
+
+        factores.append(
+            f"Espacio libre actual critico ({estructural['espacio_libre_pct']}%)."
+        )
+
+    elif estructural.get(
+        "espacio_limitado",
+        False
+    ):
+
+        puntaje += 2
+
+        factores.append(
+            f"Espacio libre actual limitado ({estructural['espacio_libre_pct']}%)."
+        )
+
+    return {
+        "puntaje": puntaje,
+        "factores": factores
+    }
+
+
+def clasificar_riesgo_predictivo_kcd(
+    puntaje
+):
+
+    if puntaje >= 14:
+
+        return "CRITICO"
+
+    if puntaje >= 9:
+
+        return "ALTO"
+
+    if puntaje >= 4:
+
+        return "MODERADO"
+
+    return "BAJO"
+
+
+def estimar_plazo_predictivo_kcd(
+    riesgo
+):
+
+    if riesgo == "CRITICO":
+
+        return "Atender en menos de 24 horas."
+
+    if riesgo == "ALTO":
+
+        return "Atender en 24 a 72 horas."
+
+    if riesgo == "MODERADO":
+
+        return "Atender durante los proximos 7 dias."
+
+    return "Mantener monitoreo preventivo mensual."
+
+
+def generar_mantenimiento_predictivo_kcd(
+    bitacora,
+    alertas,
+    validaciones,
+    estructural,
+    riesgo,
+    factores
+):
+
+    posibles_fallas = []
+    prioridades = []
+
+    if bitacora["registros"] > 0:
+
+        if (
+            bitacora["ram_promedio"] >= 75
+            or bitacora["tendencia_ram"]["tendencia"] == "SUBE"
+        ):
+
+            posibles_fallas.append(
+                "Saturacion progresiva de memoria RAM."
+            )
+
+            prioridades.append(
+                "Revisar consumo de RAM y aplicaciones en segundo plano."
+            )
+
+        if (
+            bitacora["disco_promedio"] >= 80
+            or bitacora["tendencia_disco"]["tendencia"] == "SUBE"
+        ):
+
+            posibles_fallas.append(
+                "Disco acercandose a nivel critico."
+            )
+
+            prioridades.append(
+                "Programar limpieza preventiva y revision de almacenamiento."
+            )
+
+        if bitacora["tendencia_ivk"]["tendencia"] == "BAJA":
+
+            posibles_fallas.append(
+                "Degradacion del rendimiento general del equipo."
+            )
+
+            prioridades.append(
+                "Preparar acciones del Bloque 10 y validar con Bloque 11."
+            )
+
+    if alertas["total_alertas"] > 0:
+
+        if alertas["criticas"] > 0:
+
+            posibles_fallas.append(
+                "Reincidencia de alertas criticas."
+            )
+
+            prioridades.append(
+                "Atender primero las alertas criticas registradas por Bloque 12."
+            )
+
+        if alertas["tendencia_alertas"]["tendencia"] == "AUMENTAN":
+
+            posibles_fallas.append(
+                "Incremento temporal de eventos anormales."
+            )
+
+            prioridades.append(
+                "Reducir recurrencia de alertas antes de que escalen."
+            )
+
+    if validaciones["requieren_hardware"] > 0:
+
+        posibles_fallas.append(
+            "Limitacion previamente certificada como no corregible por software."
+        )
+
+        prioridades.append(
+            "Evaluar ampliacion o intervencion de hardware."
+        )
+
+    if estructural.get(
+        "ram_estructural",
+        False
+    ):
+
+        posibles_fallas.append(
+            "Rendimiento limitado por RAM fisica insuficiente."
+        )
+
+        prioridades.append(
+            "Priorizar ampliacion fisica de RAM si el equipo lo permite."
+        )
+
+    if estructural.get(
+        "espacio_critico",
+        False
+    ):
+
+        posibles_fallas.append(
+            "Riesgo de bloqueo por almacenamiento insuficiente."
+        )
+
+        prioridades.append(
+            "Liberar espacio, respaldar archivos grandes o ampliar almacenamiento."
+        )
+
+    if not posibles_fallas:
+
+        posibles_fallas.append(
+            "No se identifican fallas probables con el historico disponible."
+        )
+
+    if not prioridades:
+
+        prioridades.append(
+            "Continuar monitoreo preventivo con Bloque 12."
+        )
+
+    plazo = estimar_plazo_predictivo_kcd(
+        riesgo
+    )
+
+    plan = {
+        "que_puede_fallar": posibles_fallas,
+        "que_atender_primero": prioridades,
+        "plazo_aproximado": plazo,
+        "factores": factores
+    }
+
+    return plan
+
+
+def registrar_prediccion_riesgo_kcd(
+    prediccion
+):
+
+    nombre_archivo = "prediccion_riesgo_kcd.csv"
+
+    existe_archivo = os.path.exists(
+        nombre_archivo
+    )
+
+    encabezados = [
+        "fecha_hora",
+        "riesgo_predictivo",
+        "puntaje",
+        "plazo_aproximado",
+        "ram_total_gb",
+        "espacio_libre_pct",
+        "que_puede_fallar",
+        "que_atender_primero",
+        "factores",
+        "registros_bitacora",
+        "total_alertas",
+        "total_validaciones"
+    ]
+
+    fila = [
+        datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        prediccion.get(
+            "riesgo_predictivo",
+            "SIN_DATOS"
+        ),
+        prediccion.get(
+            "puntaje",
+            0
+        ),
+        prediccion.get(
+            "plazo_aproximado",
+            ""
+        ),
+        prediccion.get(
+            "ram_total_gb",
+            0
+        ),
+        prediccion.get(
+            "espacio_libre_pct",
+            0
+        ),
+        " | ".join(
+            prediccion.get(
+                "que_puede_fallar",
+                []
+            )
+        ),
+        " | ".join(
+            prediccion.get(
+                "que_atender_primero",
+                []
+            )
+        ),
+        " | ".join(
+            prediccion.get(
+                "factores",
+                []
+            )
+        ),
+        prediccion.get(
+            "registros_bitacora",
+            0
+        ),
+        prediccion.get(
+            "total_alertas",
+            0
+        ),
+        prediccion.get(
+            "total_validaciones",
+            0
+        )
+    ]
+
+    with open(
+        nombre_archivo,
+        mode="a",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.writer(
+            archivo
+        )
+
+        if not existe_archivo:
+
+            escritor.writerow(
+                encabezados
+            )
+
+        escritor.writerow(
+            fila
+        )
+
+    try:
+
+        registrar_accion_kcd(
+            "PREDICCION_RIESGO",
+            prediccion.get(
+                "riesgo_predictivo",
+                "SIN_DATOS"
+            ),
+            prediccion.get(
+                "plazo_aproximado",
+                ""
+            )
+        )
+
+    except Exception:
+
+        pass
+
+    print(
+        "\n[KCD PREDICTIVO] Evidencia registrada en prediccion_riesgo_kcd.csv"
+    )
+
+
+def ejecutar_inteligencia_predictiva_kcd():
+
+    print(
+        "\n[KCD BLOQUE 13] INTELIGENCIA PREDICTIVA KCD"
+    )
+
+    bitacora_registros = leer_historico_csv_kcd(
+        "bitacora_kcd.csv"
+    )
+
+    alertas_registros = leer_historico_csv_kcd(
+        "alertas_kcd.csv"
+    )
+
+    validaciones_registros = leer_historico_csv_kcd(
+        "validacion_resultados_kcd.csv"
+    )
+
+    estructural = obtener_factores_estructurales_actuales_kcd()
+
+    if (
+        not bitacora_registros
+        and not alertas_registros
+        and not validaciones_registros
+    ):
+
+        prediccion = {
+            "riesgo_predictivo": "SIN_HISTORICO",
+            "puntaje": 0,
+            "plazo_aproximado": "No disponible por falta de historico.",
+            "ram_total_gb": estructural.get(
+                "ram_total_gb",
+                0
+            ),
+            "espacio_libre_pct": estructural.get(
+                "espacio_libre_pct",
+                0
+            ),
+            "que_puede_fallar": [
+                "No se puede predecir sin datos historicos."
+            ],
+            "que_atender_primero": [
+                "Ejecutar Bloque 12 para generar monitoreo historico."
+            ],
+            "factores": [
+                "No existe historico suficiente."
+            ],
+            "registros_bitacora": 0,
+            "total_alertas": 0,
+            "total_validaciones": 0
+        }
+
+        registrar_prediccion_riesgo_kcd(
+            prediccion
+        )
+
+        print(
+            "\n[KCD PREDICTIVO] No hay historico suficiente para predecir riesgo."
+        )
+
+        return prediccion
+
+    bitacora = analizar_bitacora_predictiva_kcd(
+        bitacora_registros
+    )
+
+    alertas = analizar_alertas_predictivas_kcd(
+        alertas_registros
+    )
+
+    validaciones = analizar_validaciones_predictivas_kcd(
+        validaciones_registros
+    )
+
+    riesgo = calcular_puntaje_riesgo_predictivo_kcd(
+        bitacora,
+        alertas,
+        validaciones,
+        estructural
+    )
+
+    riesgo_predictivo = clasificar_riesgo_predictivo_kcd(
+        riesgo["puntaje"]
+    )
+
+    mantenimiento = generar_mantenimiento_predictivo_kcd(
+        bitacora,
+        alertas,
+        validaciones,
+        estructural,
+        riesgo_predictivo,
+        riesgo["factores"]
+    )
+
+    prediccion = {
+        "riesgo_predictivo": riesgo_predictivo,
+        "puntaje": riesgo["puntaje"],
+        "plazo_aproximado": mantenimiento["plazo_aproximado"],
+        "ram_total_gb": estructural.get(
+            "ram_total_gb",
+            0
+        ),
+        "espacio_libre_pct": estructural.get(
+            "espacio_libre_pct",
+            0
+        ),
+        "que_puede_fallar": mantenimiento["que_puede_fallar"],
+        "que_atender_primero": mantenimiento["que_atender_primero"],
+        "factores": mantenimiento["factores"],
+        "registros_bitacora": bitacora["registros"],
+        "total_alertas": alertas["total_alertas"],
+        "total_validaciones": validaciones["total_validaciones"],
+        "detalle_bitacora": bitacora,
+        "detalle_alertas": alertas,
+        "detalle_validaciones": validaciones,
+        "detalle_estructural": estructural
+    }
+
+    registrar_prediccion_riesgo_kcd(
+        prediccion
+    )
+
+    print(
+        "\n[KCD PREDICCION FINAL]"
+    )
+
+    print(
+        f"Riesgo predictivo: {prediccion['riesgo_predictivo']}"
+    )
+
+    print(
+        f"Puntaje: {prediccion['puntaje']}"
+    )
+
+    print(
+        f"RAM instalada: {prediccion['ram_total_gb']} GB"
+    )
+
+    print(
+        f"Espacio libre actual: {prediccion['espacio_libre_pct']}%"
+    )
+
+    print(
+        f"Plazo aproximado: {prediccion['plazo_aproximado']}"
+    )
+
+    print(
+        "\nQue puede fallar:"
+    )
+
+    for item in prediccion["que_puede_fallar"]:
+
+        print(
+            f"- {item}"
+        )
+
+    print(
+        "\nQue atender primero:"
+    )
+
+    for item in prediccion["que_atender_primero"]:
+
+        print(
+            f"- {item}"
+        )
+
+    return prediccion
