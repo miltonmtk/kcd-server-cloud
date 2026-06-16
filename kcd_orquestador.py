@@ -599,95 +599,428 @@ def registrar_evidencia_correccion_kcd(
     )
 
 # # ==============================================================================
-# BLOQUE 5.0 - ANALÍTICA KCD
 # ==============================================================================
-#
-# 5.1 Tendencias
-# 5.2 Recomendaciones inteligentes
-# 5.3 Beneficios para el cliente
-#
+# BLOQUE 5.0 - ANÁLISIS, TENDENCIAS Y RECOMENDACIONES KCD
+# ==============================================================================
+# 5.1 Análisis de tendencias
+# 5.2 Recomendaciones automáticas
+# 5.3 Beneficios técnicos
+# 5.4 Clasificación de acciones recomendadas
 # ==============================================================================
 
 def analizar_tendencias_kcd():
+
     nombre_archivo = "bitacora_kcd.csv"
 
-    if not os.path.exists(nombre_archivo):
-        print("\n[KCD TENDENCIAS] No existe bitácora.")
-        return
+    tendencias = {
+        "registros": 0,
+        "cpu_promedio": 0,
+        "ram_promedio": 0,
+        "disco_promedio": 0,
+        "ivk_promedio": 0,
+        "estado": "Sin datos suficientes"
+    }
 
-    with open(nombre_archivo, mode="r", encoding="utf-8") as archivo:
-        lector = csv.DictReader(archivo)
-        registros = list(lector)
+    if not os.path.exists(
+        nombre_archivo
+    ):
+        print(
+            "\n[KCD TENDENCIAS] No existe bitacora_kcd.csv para analizar."
+        )
+        return tendencias
 
-    if not registros:
-        print("\n[KCD TENDENCIAS] No hay registros.")
-        return
+    registros = []
 
-    ivks = [float(r["ivk"]) for r in registros]
-    rams = [float(r["ram"]) for r in registros]
+    try:
+        with open(
+            nombre_archivo,
+            mode="r",
+            encoding="utf-8"
+        ) as archivo:
 
-    print("\n[KCD TENDENCIAS]")
-    print(f"Registros analizados: {len(registros)}")
-    print(f"IVK promedio: {round(sum(ivks)/len(ivks), 2)}")
-    print(f"Mejor IVK: {max(ivks)}")
-    print(f"Peor IVK: {min(ivks)}")
-    print(f"RAM promedio: {round(sum(rams)/len(rams), 2)}%")
+            lector = csv.DictReader(
+                archivo
+            )
 
-def generar_recomendaciones_kcd(datos, ivk, procesos_ram):
+            for fila in lector:
+                try:
+                    registros.append({
+                        "cpu": float(
+                            fila.get("cpu", 0)
+                        ),
+                        "ram": float(
+                            fila.get("ram", 0)
+                        ),
+                        "disco": float(
+                            fila.get("disco", 0)
+                        ),
+                        "ivk": float(
+                            fila.get("ivk", 0)
+                        )
+                    })
+                except Exception:
+                    continue
+
+    except Exception as error:
+        print(
+            f"\n[KCD ERROR] No se pudo analizar la bitácora: {error}"
+        )
+        return tendencias
+
+    total_registros = len(
+        registros
+    )
+
+    if total_registros == 0:
+        print(
+            "\n[KCD TENDENCIAS] No hay registros válidos para analizar."
+        )
+        return tendencias
+
+    cpu_promedio = sum(
+        item["cpu"] for item in registros
+    ) / total_registros
+
+    ram_promedio = sum(
+        item["ram"] for item in registros
+    ) / total_registros
+
+    disco_promedio = sum(
+        item["disco"] for item in registros
+    ) / total_registros
+
+    ivk_promedio = sum(
+        item["ivk"] for item in registros
+    ) / total_registros
+
+    if ivk_promedio <= 45:
+        estado = "Crítico"
+    elif (
+        ram_promedio >= 85
+        or cpu_promedio >= 85
+        or disco_promedio >= 90
+    ):
+        estado = "Crítico"
+    elif ivk_promedio <= 65:
+        estado = "Preventivo"
+    elif (
+        ram_promedio >= 70
+        or cpu_promedio >= 70
+        or disco_promedio >= 80
+    ):
+        estado = "Preventivo"
+    else:
+        estado = "Estable"
+
+    tendencias = {
+        "registros": total_registros,
+        "cpu_promedio": round(
+            cpu_promedio,
+            2
+        ),
+        "ram_promedio": round(
+            ram_promedio,
+            2
+        ),
+        "disco_promedio": round(
+            disco_promedio,
+            2
+        ),
+        "ivk_promedio": round(
+            ivk_promedio,
+            2
+        ),
+        "estado": estado
+    }
+
+    print(
+        "\n[KCD TENDENCIAS] Análisis completado."
+    )
+    print(
+        f"Registros analizados: {tendencias['registros']}"
+    )
+    print(
+        f"CPU promedio: {tendencias['cpu_promedio']}%"
+    )
+    print(
+        f"RAM promedio: {tendencias['ram_promedio']}%"
+    )
+    print(
+        f"Disco promedio: {tendencias['disco_promedio']}%"
+    )
+    print(
+        f"IVK promedio: {tendencias['ivk_promedio']}"
+    )
+    print(
+        f"Estado general: {tendencias['estado']}"
+    )
+
+    return tendencias
+
+
+def generar_recomendaciones_kcd(
+    datos=None,
+    ivk=None,
+    procesos_ram=None,
+    diagnosticos_ram=None
+):
+
     recomendaciones = []
 
-    proceso_principal = procesos_ram[0] if procesos_ram else None
+    if datos is None:
+        datos = {}
 
-    if datos["ram"] > 85:
-        recomendaciones.append("RAM crítica: cerrar programas o pestañas no esenciales.")
+    if procesos_ram is None:
+        procesos_ram = []
 
-    if proceso_principal and "chrome" in proceso_principal["nombre"].lower():
-        recomendaciones.append("Chrome consume más RAM: cerrar pestañas inactivas o reiniciar navegador.")
+    if diagnosticos_ram is None:
+        diagnosticos_ram = []
 
-    if datos["disco"] > 80:
-        recomendaciones.append("Disco alto: liberar espacio eliminando temporales y descargas innecesarias.")
+    cpu = float(
+        datos.get("cpu", 0)
+    )
 
-    if ivk < 50:
-        recomendaciones.append("IVK bajo: ejecutar optimización preventiva.")
+    ram = float(
+        datos.get("ram", 0)
+    )
 
-    print("\n[KCD LAB-04] RECOMENDACIONES INTELIGENTES")
+    disco = float(
+        datos.get("disco", 0)
+    )
+
+    if ivk is None:
+        ivk = 100
+
+    try:
+        ivk = float(
+            ivk
+        )
+    except Exception:
+        ivk = 100
+
+    if cpu >= 85:
+        recomendaciones.append(
+            "Revisar procesos con alto consumo de CPU y cerrar tareas no críticas."
+        )
+    elif cpu >= 70:
+        recomendaciones.append(
+            "Monitorear CPU y validar aplicaciones en segundo plano."
+        )
+
+    if ram >= 85:
+        recomendaciones.append(
+            "Liberar memoria RAM cerrando procesos pesados o reiniciando aplicaciones críticas."
+        )
+    elif ram >= 70:
+        recomendaciones.append(
+            "Aplicar mantenimiento preventivo sobre consumo de memoria RAM."
+        )
+
+    if disco >= 90:
+        recomendaciones.append(
+            "Liberar espacio en disco eliminando temporales, cachés y archivos innecesarios."
+        )
+    elif disco >= 80:
+        recomendaciones.append(
+            "Programar limpieza preventiva de disco."
+        )
+
+    if ivk <= 45:
+        recomendaciones.append(
+            "Priorizar corrección inmediata por IVK bajo."
+        )
+    elif ivk <= 65:
+        recomendaciones.append(
+            "Mantener vigilancia preventiva por IVK medio."
+        )
+
+    if procesos_ram:
+        proceso_principal = procesos_ram[0]
+        nombre = proceso_principal.get(
+            "nombre",
+            "N/A"
+        )
+        memoria = proceso_principal.get(
+            "memoria_mb",
+            0
+        )
+
+        recomendaciones.append(
+            f"Auditar el proceso con mayor consumo de RAM: {nombre} ({memoria} MB)."
+        )
+
+    for diagnostico in diagnosticos_ram:
+        if diagnostico not in recomendaciones:
+            recomendaciones.append(
+                diagnostico
+            )
+
+    if not recomendaciones:
+        recomendaciones.append(
+            "El sistema se encuentra estable. Continuar monitoreo preventivo periódico."
+        )
+
+    print(
+        "\n[KCD RECOMENDACIONES] Recomendaciones generadas."
+    )
+
     for recomendacion in recomendaciones:
-        print(f"- {recomendacion}")
+        print(
+            f"- {recomendacion}"
+        )
 
     return recomendaciones
 
-def mostrar_beneficios_kcd(datos, ivk):
-    beneficios = []
 
-    if datos["ram"] > 80:
-        beneficios.append(
-            "Mayor velocidad en multitarea."
+def mostrar_beneficios_kcd(
+    datos=None,
+    ivk=None
+):
+
+    beneficios = [
+        "Reducción de fallas por mantenimiento preventivo.",
+        "Identificación temprana de consumo elevado de CPU, RAM y disco.",
+        "Registro histórico de evidencias técnicas.",
+        "Soporte para auditoría de acciones correctivas.",
+        "Mejora de continuidad digital del equipo.",
+        "Mayor control operativo sobre procesos críticos.",
+        "Base técnica para informes PDF y trazabilidad KCD."
+    ]
+
+    if datos is None:
+        datos = {}
+
+    try:
+        ivk_valor = float(
+            ivk
         )
+    except Exception:
+        ivk_valor = None
 
-        beneficios.append(
-            "Menor espera al cambiar entre aplicaciones."
-        )
+    cpu = datos.get(
+        "cpu",
+        None
+    )
 
-    if ivk < 60:
-        beneficios.append(
-            "Mejor experiencia durante horas pico de trabajo."
-        )
+    ram = datos.get(
+        "ram",
+        None
+    )
 
-    if datos["disco"] > 80:
-        beneficios.append(
-            "Mayor disponibilidad de espacio para trabajo diario."
-        )
+    disco = datos.get(
+        "disco",
+        None
+    )
 
-    print("\n[KCD]")
-    print("KCD detectó una oportunidad para mejorar la velocidad de trabajo.\n")
-
-    print("BENEFICIOS\n")
+    print(
+        "\n[KCD BENEFICIOS] Beneficios del sistema ESCUDO KCD:"
+    )
 
     for beneficio in beneficios:
-        print(f"✓ {beneficio}")
+        print(
+            f"- {beneficio}"
+        )
+
+    if cpu is not None:
+        print(
+            f"- CPU monitoreada: {cpu}%"
+        )
+
+    if ram is not None:
+        print(
+            f"- RAM monitoreada: {ram}%"
+        )
+
+    if disco is not None:
+        print(
+            f"- Disco monitoreado: {disco}%"
+        )
+
+    if ivk_valor is not None:
+        print(
+            f"- IVK evaluado: {ivk_valor}"
+        )
 
     return beneficios
 
+
+def clasificar_acciones_recomendadas_kcd(
+    recomendaciones=None
+):
+
+    if recomendaciones is None:
+        recomendaciones = []
+
+    clasificacion = {
+        "correctivas": [],
+        "preventivas": [],
+        "auditoria": [],
+        "monitoreo": []
+    }
+
+    for recomendacion in recomendaciones:
+
+        texto = recomendacion.lower()
+
+        if (
+            "cerrar" in texto
+            or "liberar" in texto
+            or "corrección" in texto
+            or "corregir" in texto
+            or "reiniciando" in texto
+            or "eliminando" in texto
+            or "inmediata" in texto
+            or "ivk bajo" in texto
+        ):
+            clasificacion["correctivas"].append(
+                recomendacion
+            )
+
+        elif (
+            "preventivo" in texto
+            or "preventiva" in texto
+            or "programar" in texto
+            or "mantenimiento" in texto
+            or "vigilancia" in texto
+            or "ivk medio" in texto
+        ):
+            clasificacion["preventivas"].append(
+                recomendacion
+            )
+
+        elif (
+            "auditar" in texto
+            or "auditoría" in texto
+            or "evidencia" in texto
+            or "registro" in texto
+        ):
+            clasificacion["auditoria"].append(
+                recomendacion
+            )
+
+        else:
+            clasificacion["monitoreo"].append(
+                recomendacion
+            )
+
+    print(
+        "\n[KCD CLASIFICACIÓN] Acciones recomendadas clasificadas."
+    )
+
+    print(
+        f"Correctivas: {len(clasificacion['correctivas'])}"
+    )
+    print(
+        f"Preventivas: {len(clasificacion['preventivas'])}"
+    )
+    print(
+        f"Auditoría: {len(clasificacion['auditoria'])}"
+    )
+    print(
+        f"Monitoreo: {len(clasificacion['monitoreo'])}"
+    )
+
+    return clasificacion
 # ==============================================================================
 # BLOQUE 6.0 - OPTIMIZACIÓN DEL SISTEMA
 # ==============================================================================

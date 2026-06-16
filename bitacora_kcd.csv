@@ -44,3 +44,5 @@ fecha_hora,cpu,ram,disco,ivk,proceso_principal,pid,memoria_mb,diagnostico
 2026-06-16 17:00:08,18.9,92.0,87.4,45,chrome.exe,2312,548.08,RAM en estado crítico: posible lentitud durante trabajo en hora pico. | Proceso con mayor consumo de RAM: chrome.exe (548.08 MB).
 2026-06-16 17:10:35,10.3,88.1,87.3,45,chrome.exe,2312,539.71,RAM con alta ocupación: se recomienda monitoreo. | Proceso con mayor consumo de RAM: chrome.exe (539.71 MB).
 2026-06-16 17:15:44,10.1,85.1,87.3,45,chrome.exe,2312,534.74,RAM con alta ocupación: se recomienda monitoreo. | Proceso con mayor consumo de RAM: chrome.exe (534.74 MB).
+2026-06-16 19:43:54,22.4,86.5,87.4,45,chrome.exe,15864,452.29,RAM con alta ocupación: se recomienda monitoreo. | Proceso con mayor consumo de RAM: chrome.exe (452.29 MB).
+2026-06-16 20:08:05,20.0,85.2,87.4,45,chrome.exe,5360,335.6,RAM con alta ocupación: se recomienda monitoreo. | Proceso con mayor consumo de RAM: chrome.exe (335.6 MB).
