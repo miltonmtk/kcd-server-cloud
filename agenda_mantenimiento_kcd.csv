@@ -1,0 +1,13 @@
+fecha,prioridad,accion,origen,estado
+2026-06-16 23:04:40,CRITICO,Evaluar ampliacion fisica de memoria RAM.,BLOQUE_13_PREDICTIVO,PENDIENTE
+2026-06-16 23:04:40,CRITICO,Liberar espacio en disco mediante limpieza segura autorizada.,BLOQUE_12_13,PENDIENTE
+2026-06-16 23:04:40,CRITICO,Preparar optimizacion preventiva con Bloque 10 y validar con Bloque 11.,BLOQUE_13_PREDICTIVO,PENDIENTE
+2026-06-16 23:04:40,CRITICO,Revisar saturacion de RAM y preparar plan de remediacion.,BLOQUE_12_MONITOREO,PENDIENTE
+2026-06-16 23:04:40,CRITICO,Atender riesgo predictivo critico y preparar plan de mantenimiento.,BLOQUE_13_PREDICTIVO,PENDIENTE
+2026-06-16 23:04:40,CRITICO,Atender alerta critica: Espacio libre critico (12.64%).,BLOQUE_12_ALERTAS,PENDIENTE
+2026-06-16 23:04:40,CRITICO,Atender alerta critica: IVK bajo (45.0%).,BLOQUE_12_ALERTAS,PENDIENTE
+2026-06-16 23:04:40,CRITICO,Preparar accion de liberacion de espacio para Bloque 10.,BLOQUE_10_PREPARADO,PENDIENTE
+2026-06-16 23:04:40,CRITICO,Preparar remediacion con Bloque 10 y validar con Bloque 11.,BLOQUE_10_PREPARADO,PENDIENTE
+2026-06-16 23:04:40,ALTO,Monitorear aplicaciones de alto consumo.,BLOQUE_10_PREPARADO,PENDIENTE
+2026-06-16 23:04:40,ALTO,Programar limpieza preventiva de almacenamiento.,BLOQUE_10_PREPARADO,PENDIENTE
+2026-06-16 23:04:40,BAJO,Realizar auditoria preventiva general KCD.,BLOQUE_14_ORQUESTACION,PENDIENTE

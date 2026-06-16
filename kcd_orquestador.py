@@ -6608,3 +6608,1358 @@ def ejecutar_inteligencia_predictiva_kcd():
         )
 
     return prediccion
+
+# ==============================================================================
+# BLOQUE 14.0 - ORQUESTACION INTELIGENTE KCD
+# ==============================================================================
+#
+# 14.1 Consolidacion de evidencias
+# 14.2 Priorizacion automatica
+# 14.3 Motor de decisiones KCD
+# 14.4 Plan automatico de mantenimiento
+# 14.5 Indice de Prioridad KCD - IPK
+# 14.6 Generador de agenda tecnica
+# 14.7 Resumen ejecutivo automatico
+# 14.8 Evidencia de orquestacion
+#
+# ==============================================================================
+
+def leer_csv_orquestacion_kcd(
+    nombre_archivo
+):
+
+    if not os.path.exists(
+        nombre_archivo
+    ):
+
+        return []
+
+    registros = []
+
+    try:
+
+        with open(
+            nombre_archivo,
+            mode="r",
+            encoding="utf-8"
+        ) as archivo:
+
+            lector = csv.DictReader(
+                archivo
+            )
+
+            for fila in lector:
+
+                registros.append(
+                    fila
+                )
+
+    except Exception as error:
+
+        print(
+            f"\n[KCD ORQUESTADOR ERROR] No se pudo leer {nombre_archivo}: {error}"
+        )
+
+        return []
+
+    return registros
+
+
+def convertir_numero_orquestacion_kcd(
+    valor,
+    defecto=0
+):
+
+    try:
+
+        return float(
+            valor
+        )
+
+    except Exception:
+
+        return defecto
+
+
+def ultimo_registro_orquestacion_kcd(
+    registros
+):
+
+    if not registros:
+
+        return {}
+
+    return registros[
+        -1
+    ]
+
+
+def consolidar_evidencias_kcd():
+
+    print(
+        "\n[KCD ORQUESTADOR] Consolidando evidencias KCD..."
+    )
+
+    bitacora = leer_csv_orquestacion_kcd(
+        "bitacora_kcd.csv"
+    )
+
+    alertas = leer_csv_orquestacion_kcd(
+        "alertas_kcd.csv"
+    )
+
+    acciones_preparadas = leer_csv_orquestacion_kcd(
+        "acciones_preparadas_bloque10_kcd.csv"
+    )
+
+    validaciones = leer_csv_orquestacion_kcd(
+        "validacion_resultados_kcd.csv"
+    )
+
+    predicciones = leer_csv_orquestacion_kcd(
+        "prediccion_riesgo_kcd.csv"
+    )
+
+    evidencias = {
+        "bitacora": bitacora,
+        "alertas": alertas,
+        "acciones_preparadas": acciones_preparadas,
+        "validaciones": validaciones,
+        "predicciones": predicciones,
+        "ultima_bitacora": ultimo_registro_orquestacion_kcd(
+            bitacora
+        ),
+        "ultima_validacion": ultimo_registro_orquestacion_kcd(
+            validaciones
+        ),
+        "ultima_prediccion": ultimo_registro_orquestacion_kcd(
+            predicciones
+        )
+    }
+
+    print(
+        f"Registros bitacora: {len(bitacora)}"
+    )
+
+    print(
+        f"Alertas: {len(alertas)}"
+    )
+
+    print(
+        f"Acciones preparadas: {len(acciones_preparadas)}"
+    )
+
+    print(
+        f"Validaciones: {len(validaciones)}"
+    )
+
+    print(
+        f"Predicciones: {len(predicciones)}"
+    )
+
+    return evidencias
+
+
+def contar_alertas_por_nivel_kcd(
+    alertas
+):
+
+    conteo = {
+        "CRITICO": 0,
+        "ALTO": 0,
+        "MODERADO": 0,
+        "BAJO": 0
+    }
+
+    for alerta in alertas:
+
+        nivel = alerta.get(
+            "nivel",
+            "BAJO"
+        )
+
+        if nivel in conteo:
+
+            conteo[nivel] += 1
+
+        else:
+
+            conteo["BAJO"] += 1
+
+    return conteo
+
+
+def clasificar_ipk_kcd(
+    ipk
+):
+
+    if ipk >= 76:
+
+        return "CRITICO"
+
+    if ipk >= 51:
+
+        return "ALTO"
+
+    if ipk >= 26:
+
+        return "MODERADO"
+
+    return "BAJO"
+
+
+def calcular_ipk_kcd(
+    evidencias
+):
+
+    ultima_bitacora = evidencias.get(
+        "ultima_bitacora",
+        {}
+    )
+
+    ultima_prediccion = evidencias.get(
+        "ultima_prediccion",
+        {}
+    )
+
+    ultima_validacion = evidencias.get(
+        "ultima_validacion",
+        {}
+    )
+
+    alertas = evidencias.get(
+        "alertas",
+        []
+    )
+
+    conteo_alertas = contar_alertas_por_nivel_kcd(
+        alertas
+    )
+
+    cpu = convertir_numero_orquestacion_kcd(
+        ultima_bitacora.get(
+            "cpu",
+            0
+        )
+    )
+
+    ram = convertir_numero_orquestacion_kcd(
+        ultima_bitacora.get(
+            "ram",
+            0
+        )
+    )
+
+    disco = convertir_numero_orquestacion_kcd(
+        ultima_bitacora.get(
+            "disco",
+            0
+        )
+    )
+
+    ivk = convertir_numero_orquestacion_kcd(
+        ultima_bitacora.get(
+            "ivk",
+            100
+        ),
+        100
+    )
+
+    riesgo_predictivo = ultima_prediccion.get(
+        "riesgo_predictivo",
+        "BAJO"
+    )
+
+    espacio_libre = convertir_numero_orquestacion_kcd(
+        ultima_prediccion.get(
+            "espacio_libre_pct",
+            100
+        ),
+        100
+    )
+
+    ram_total = convertir_numero_orquestacion_kcd(
+        ultima_prediccion.get(
+            "ram_total_gb",
+            0
+        )
+    )
+
+    certificacion = ultima_validacion.get(
+        "certificacion",
+        ""
+    )
+
+    resultado_validacion = ultima_validacion.get(
+        "resultado",
+        ""
+    )
+
+    ipk = 0
+    factores = []
+
+    if ivk <= 45:
+
+        ipk += 25
+
+        factores.append(
+            "IVK critico"
+        )
+
+    elif ivk <= 65:
+
+        ipk += 15
+
+        factores.append(
+            "IVK preventivo"
+        )
+
+    elif ivk <= 80:
+
+        ipk += 7
+
+        factores.append(
+            "IVK moderado"
+        )
+
+    if conteo_alertas["CRITICO"] > 0:
+
+        ipk += 20
+
+        factores.append(
+            "Alertas criticas"
+        )
+
+    elif conteo_alertas["ALTO"] > 0:
+
+        ipk += 12
+
+        factores.append(
+            "Alertas altas"
+        )
+
+    elif conteo_alertas["MODERADO"] > 0:
+
+        ipk += 6
+
+        factores.append(
+            "Alertas moderadas"
+        )
+
+    if riesgo_predictivo == "CRITICO":
+
+        ipk += 20
+
+        factores.append(
+            "Prediccion critica"
+        )
+
+    elif riesgo_predictivo == "ALTO":
+
+        ipk += 15
+
+        factores.append(
+            "Prediccion alta"
+        )
+
+    elif riesgo_predictivo == "MODERADO":
+
+        ipk += 8
+
+        factores.append(
+            "Prediccion moderada"
+        )
+
+    if ram >= 90:
+
+        ipk += 15
+
+        factores.append(
+            "RAM en nivel critico"
+        )
+
+    elif ram >= 80:
+
+        ipk += 10
+
+        factores.append(
+            "RAM alta"
+        )
+
+    elif ram >= 70:
+
+        ipk += 5
+
+        factores.append(
+            "RAM moderada"
+        )
+
+    if ram_total > 0 and ram_total < 4:
+
+        ipk += 15
+
+        factores.append(
+            "RAM fisica insuficiente"
+        )
+
+    elif ram_total >= 4 and ram_total < 8:
+
+        ipk += 8
+
+        factores.append(
+            "RAM fisica limitada"
+        )
+
+    if disco >= 90:
+
+        ipk += 15
+
+        factores.append(
+            "Disco critico"
+        )
+
+    elif disco >= 80:
+
+        ipk += 10
+
+        factores.append(
+            "Disco alto"
+        )
+
+    if espacio_libre <= 15:
+
+        ipk += 15
+
+        factores.append(
+            "Espacio libre critico"
+        )
+
+    elif espacio_libre <= 25:
+
+        ipk += 8
+
+        factores.append(
+            "Espacio libre limitado"
+        )
+
+    if certificacion == "REQUIERE HARDWARE":
+
+        ipk += 15
+
+        factores.append(
+            "Validacion requiere hardware"
+        )
+
+    elif (
+        certificacion == "NO EFECTIVO"
+        or resultado_validacion == "SIN CAMBIO"
+        or resultado_validacion == "EMPEORO"
+    ):
+
+        ipk += 10
+
+        factores.append(
+            "Validacion no efectiva"
+        )
+
+    if cpu >= 90:
+
+        ipk += 10
+
+        factores.append(
+            "CPU critica"
+        )
+
+    elif cpu >= 75:
+
+        ipk += 5
+
+        factores.append(
+            "CPU alta"
+        )
+
+    if ipk > 100:
+
+        ipk = 100
+
+    nivel = clasificar_ipk_kcd(
+        ipk
+    )
+
+    return {
+        "ipk": ipk,
+        "nivel": nivel,
+        "factores": factores,
+        "cpu": cpu,
+        "ram": ram,
+        "disco": disco,
+        "ivk": ivk,
+        "espacio_libre_pct": espacio_libre,
+        "ram_total_gb": ram_total,
+        "riesgo_predictivo": riesgo_predictivo,
+        "certificacion": certificacion,
+        "alertas": conteo_alertas
+    }
+
+
+def crear_item_decision_kcd(
+    prioridad,
+    accion,
+    origen,
+    plazo,
+    categoria
+):
+
+    return {
+        "fecha": datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        "prioridad": prioridad,
+        "accion": accion,
+        "origen": origen,
+        "plazo": plazo,
+        "categoria": categoria,
+        "estado": "PENDIENTE"
+    }
+
+
+def priorizar_acciones_kcd(
+    evidencias,
+    ipk
+):
+
+    print(
+        "\n[KCD ORQUESTADOR] Priorizando acciones..."
+    )
+
+    acciones = []
+
+    ram_total = ipk.get(
+        "ram_total_gb",
+        0
+    )
+
+    espacio_libre = ipk.get(
+        "espacio_libre_pct",
+        100
+    )
+
+    ram = ipk.get(
+        "ram",
+        0
+    )
+
+    disco = ipk.get(
+        "disco",
+        0
+    )
+
+    cpu = ipk.get(
+        "cpu",
+        0
+    )
+
+    ivk = ipk.get(
+        "ivk",
+        100
+    )
+
+    riesgo_predictivo = ipk.get(
+        "riesgo_predictivo",
+        "BAJO"
+    )
+
+    if ram_total > 0 and ram_total < 4:
+
+        acciones.append(
+            crear_item_decision_kcd(
+                "CRITICO",
+                "Evaluar ampliacion fisica de memoria RAM.",
+                "BLOQUE_13_PREDICTIVO",
+                "INMEDIATO",
+                "HARDWARE"
+            )
+        )
+
+    if espacio_libre <= 15 or disco >= 90:
+
+        acciones.append(
+            crear_item_decision_kcd(
+                "CRITICO",
+                "Liberar espacio en disco mediante limpieza segura autorizada.",
+                "BLOQUE_12_13",
+                "INMEDIATO",
+                "SOFTWARE"
+            )
+        )
+
+    elif espacio_libre <= 25 or disco >= 80:
+
+        acciones.append(
+            crear_item_decision_kcd(
+                "ALTO",
+                "Programar limpieza preventiva de almacenamiento.",
+                "BLOQUE_12_13",
+                "24 HORAS",
+                "SOFTWARE"
+            )
+        )
+
+    if ivk <= 45:
+
+        acciones.append(
+            crear_item_decision_kcd(
+                "CRITICO",
+                "Preparar optimizacion preventiva con Bloque 10 y validar con Bloque 11.",
+                "BLOQUE_13_PREDICTIVO",
+                "INMEDIATO",
+                "SOFTWARE"
+            )
+        )
+
+    elif ivk <= 65:
+
+        acciones.append(
+            crear_item_decision_kcd(
+                "ALTO",
+                "Programar optimizacion general del sistema.",
+                "BLOQUE_13_PREDICTIVO",
+                "7 DIAS",
+                "SOFTWARE"
+            )
+        )
+
+    if ram >= 90:
+
+        acciones.append(
+            crear_item_decision_kcd(
+                "CRITICO",
+                "Revisar saturacion de RAM y preparar plan de remediacion.",
+                "BLOQUE_12_MONITOREO",
+                "INMEDIATO",
+                "SOFTWARE"
+            )
+        )
+
+    elif ram >= 75:
+
+        acciones.append(
+            crear_item_decision_kcd(
+                "ALTO",
+                "Revisar aplicaciones de alto consumo de memoria.",
+                "BLOQUE_12_MONITOREO",
+                "24 HORAS",
+                "USUARIO"
+            )
+        )
+
+    if cpu >= 90:
+
+        acciones.append(
+            crear_item_decision_kcd(
+                "CRITICO",
+                "Revisar procesos de alto consumo de CPU sin cerrarlos automaticamente.",
+                "BLOQUE_12_MONITOREO",
+                "INMEDIATO",
+                "SOFTWARE"
+            )
+        )
+
+    elif cpu >= 75:
+
+        acciones.append(
+            crear_item_decision_kcd(
+                "ALTO",
+                "Monitorear CPU y revisar aplicaciones activas.",
+                "BLOQUE_12_MONITOREO",
+                "24 HORAS",
+                "VIGILANCIA"
+            )
+        )
+
+    if riesgo_predictivo == "CRITICO":
+
+        acciones.append(
+            crear_item_decision_kcd(
+                "CRITICO",
+                "Atender riesgo predictivo critico y preparar plan de mantenimiento.",
+                "BLOQUE_13_PREDICTIVO",
+                "INMEDIATO",
+                "ORQUESTACION"
+            )
+        )
+
+    elif riesgo_predictivo == "ALTO":
+
+        acciones.append(
+            crear_item_decision_kcd(
+                "ALTO",
+                "Atender riesgo predictivo alto durante la ventana de mantenimiento.",
+                "BLOQUE_13_PREDICTIVO",
+                "24 HORAS",
+                "ORQUESTACION"
+            )
+        )
+
+    for alerta in evidencias.get(
+        "alertas",
+        []
+    ):
+
+        tipo = alerta.get(
+            "tipo",
+            ""
+        )
+
+        nivel = alerta.get(
+            "nivel",
+            ""
+        )
+
+        mensaje = alerta.get(
+            "mensaje",
+            ""
+        )
+
+        if (
+            "CHROME" in tipo
+            and nivel in [
+                "CRITICO",
+                "ALTO"
+            ]
+        ):
+
+            acciones.append(
+                crear_item_decision_kcd(
+                    nivel,
+                    "Revisar Chrome: pestanas, extensiones y consumo de memoria.",
+                    "BLOQUE_12_CHROME",
+                    "24 HORAS",
+                    "USUARIO"
+                )
+            )
+
+        elif (
+            nivel == "CRITICO"
+            and mensaje
+        ):
+
+            acciones.append(
+                crear_item_decision_kcd(
+                    "CRITICO",
+                    f"Atender alerta critica: {mensaje}",
+                    "BLOQUE_12_ALERTAS",
+                    "INMEDIATO",
+                    "VIGILANCIA"
+                )
+            )
+
+    for accion_preparada in evidencias.get(
+        "acciones_preparadas",
+        []
+    ):
+
+        accion_sugerida = accion_preparada.get(
+            "accion_sugerida",
+            ""
+        )
+
+        nivel = accion_preparada.get(
+            "nivel",
+            "MODERADO"
+        )
+
+        if accion_sugerida:
+
+            plazo = "24 HORAS"
+
+            if nivel == "CRITICO":
+
+                plazo = "INMEDIATO"
+
+            acciones.append(
+                crear_item_decision_kcd(
+                    nivel,
+                    accion_sugerida,
+                    "BLOQUE_10_PREPARADO",
+                    plazo,
+                    "PLANIFICACION"
+                )
+            )
+
+    acciones.append(
+        crear_item_decision_kcd(
+            "BAJO",
+            "Realizar auditoria preventiva general KCD.",
+            "BLOQUE_14_ORQUESTACION",
+            "30 DIAS",
+            "AUDITORIA"
+        )
+    )
+
+    return eliminar_acciones_duplicadas_kcd(
+        acciones
+    )
+
+
+def eliminar_acciones_duplicadas_kcd(
+    acciones
+):
+
+    vistas = set()
+    depuradas = []
+
+    for accion in acciones:
+
+        clave = (
+            accion.get(
+                "accion",
+                ""
+            ),
+            accion.get(
+                "plazo",
+                ""
+            )
+        )
+
+        if clave in vistas:
+
+            continue
+
+        vistas.add(
+            clave
+        )
+
+        depuradas.append(
+            accion
+        )
+
+    orden = {
+        "CRITICO": 1,
+        "ALTO": 2,
+        "MODERADO": 3,
+        "BAJO": 4
+    }
+
+    depuradas.sort(
+        key=lambda item: orden.get(
+            item.get(
+                "prioridad",
+                "BAJO"
+            ),
+            4
+        )
+    )
+
+    return depuradas
+
+
+def motor_decisiones_kcd(
+    acciones
+):
+
+    atender_primero = []
+    puede_esperar = []
+    debe_vigilarse = []
+    requiere_hardware = []
+
+    for accion in acciones:
+
+        categoria = accion.get(
+            "categoria",
+            ""
+        )
+
+        prioridad = accion.get(
+            "prioridad",
+            "BAJO"
+        )
+
+        if categoria == "HARDWARE":
+
+            requiere_hardware.append(
+                accion
+            )
+
+        elif prioridad in [
+            "CRITICO",
+            "ALTO"
+        ]:
+
+            atender_primero.append(
+                accion
+            )
+
+        elif categoria == "VIGILANCIA":
+
+            debe_vigilarse.append(
+                accion
+            )
+
+        else:
+
+            puede_esperar.append(
+                accion
+            )
+
+    return {
+        "atender_primero": atender_primero,
+        "puede_esperar": puede_esperar,
+        "debe_vigilarse": debe_vigilarse,
+        "requiere_hardware": requiere_hardware
+    }
+
+
+def generar_plan_mantenimiento_kcd(
+    acciones
+):
+
+    plan = {
+        "INMEDIATO": [],
+        "24 HORAS": [],
+        "7 DIAS": [],
+        "30 DIAS": []
+    }
+
+    for accion in acciones:
+
+        plazo = accion.get(
+            "plazo",
+            "30 DIAS"
+        )
+
+        if plazo not in plan:
+
+            plazo = "30 DIAS"
+
+        plan[plazo].append(
+            accion
+        )
+
+    return plan
+
+
+def agenda_item_existe_kcd(
+    accion,
+    origen,
+    estado
+):
+
+    archivo = "agenda_mantenimiento_kcd.csv"
+
+    if not os.path.exists(
+        archivo
+    ):
+
+        return False
+
+    try:
+
+        with open(
+            archivo,
+            mode="r",
+            encoding="utf-8"
+        ) as archivo_csv:
+
+            lector = csv.DictReader(
+                archivo_csv
+            )
+
+            for fila in lector:
+
+                if (
+                    fila.get(
+                        "accion",
+                        ""
+                    ) == accion
+                    and fila.get(
+                        "origen",
+                        ""
+                    ) == origen
+                    and fila.get(
+                        "estado",
+                        ""
+                    ) == estado
+                ):
+
+                    return True
+
+    except Exception:
+
+        return False
+
+    return False
+
+
+def generar_agenda_mantenimiento_kcd(
+    acciones
+):
+
+    nombre_archivo = "agenda_mantenimiento_kcd.csv"
+
+    existe_archivo = os.path.exists(
+        nombre_archivo
+    )
+
+    encabezados = [
+        "fecha",
+        "prioridad",
+        "accion",
+        "origen",
+        "estado"
+    ]
+
+    nuevas = 0
+
+    with open(
+        nombre_archivo,
+        mode="a",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.writer(
+            archivo
+        )
+
+        if not existe_archivo:
+
+            escritor.writerow(
+                encabezados
+            )
+
+        for item in acciones:
+
+            accion = item.get(
+                "accion",
+                ""
+            )
+
+            origen = item.get(
+                "origen",
+                ""
+            )
+
+            estado = item.get(
+                "estado",
+                "PENDIENTE"
+            )
+
+            if agenda_item_existe_kcd(
+                accion,
+                origen,
+                estado
+            ):
+
+                continue
+
+            escritor.writerow([
+                item.get(
+                    "fecha",
+                    datetime.now().strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+                ),
+                item.get(
+                    "prioridad",
+                    "BAJO"
+                ),
+                accion,
+                origen,
+                estado
+            ])
+
+            nuevas += 1
+
+    print(
+        f"\n[KCD ORQUESTADOR] Agenda generada/actualizada: {nombre_archivo}"
+    )
+
+    print(
+        f"Acciones nuevas en agenda: {nuevas}"
+    )
+
+    return nuevas
+
+
+def registrar_orquestacion_kcd(
+    ipk,
+    resumen
+):
+
+    nombre_archivo = "orquestacion_kcd.csv"
+
+    existe_archivo = os.path.exists(
+        nombre_archivo
+    )
+
+    encabezados = [
+        "fecha",
+        "IPK",
+        "riesgo_actual",
+        "riesgo_futuro",
+        "accion_principal",
+        "nivel_prioridad"
+    ]
+
+    fila = [
+        datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        ipk.get(
+            "ipk",
+            0
+        ),
+        resumen.get(
+            "riesgo_actual",
+            "BAJO"
+        ),
+        resumen.get(
+            "riesgo_futuro",
+            "BAJO"
+        ),
+        resumen.get(
+            "accion_recomendada",
+            ""
+        ),
+        resumen.get(
+            "nivel_prioridad",
+            "BAJO"
+        )
+    ]
+
+    with open(
+        nombre_archivo,
+        mode="a",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.writer(
+            archivo
+        )
+
+        if not existe_archivo:
+
+            escritor.writerow(
+                encabezados
+            )
+
+        escritor.writerow(
+            fila
+        )
+
+    try:
+
+        registrar_accion_kcd(
+            "ORQUESTACION_KCD",
+            resumen.get(
+                "nivel_prioridad",
+                "BAJO"
+            ),
+            resumen.get(
+                "accion_recomendada",
+                ""
+            )
+        )
+
+    except Exception:
+
+        pass
+
+    print(
+        f"\n[KCD ORQUESTADOR] Evidencia registrada: {nombre_archivo}"
+    )
+
+
+def generar_resumen_ejecutivo_orquestador_kcd(
+    ipk,
+    acciones,
+    decisiones
+):
+
+    if acciones:
+
+        accion_principal = acciones[0].get(
+            "accion",
+            "Sin accion principal"
+        )
+
+        nivel_prioridad = acciones[0].get(
+            "prioridad",
+            "BAJO"
+        )
+
+    else:
+
+        accion_principal = "Continuar monitoreo preventivo."
+        nivel_prioridad = "BAJO"
+
+    riesgo_actual = ipk.get(
+        "nivel",
+        "BAJO"
+    )
+
+    riesgo_futuro = ipk.get(
+        "riesgo_predictivo",
+        "BAJO"
+    )
+
+    if ipk.get(
+        "ipk",
+        0
+    ) >= 76:
+
+        estado_general = "ATENCION INMEDIATA"
+
+    elif ipk.get(
+        "ipk",
+        0
+    ) >= 51:
+
+        estado_general = "RIESGO ALTO"
+
+    elif ipk.get(
+        "ipk",
+        0
+    ) >= 26:
+
+        estado_general = "VIGILANCIA PREVENTIVA"
+
+    else:
+
+        estado_general = "ESTABLE"
+
+    resumen = {
+        "estado_general": estado_general,
+        "riesgo_actual": riesgo_actual,
+        "riesgo_futuro": riesgo_futuro,
+        "prioridad_principal": nivel_prioridad,
+        "accion_recomendada": accion_principal,
+        "nivel_prioridad": nivel_prioridad,
+        "atender_primero": len(
+            decisiones.get(
+                "atender_primero",
+                []
+            )
+        ),
+        "requiere_hardware": len(
+            decisiones.get(
+                "requiere_hardware",
+                []
+            )
+        )
+    }
+
+    print(
+        "\n[KCD ORQUESTADOR]"
+    )
+
+    print(
+        f"Estado general: {resumen['estado_general']}"
+    )
+
+    print(
+        f"IPK: {ipk['ipk']} / 100"
+    )
+
+    print(
+        f"Riesgo actual: {resumen['riesgo_actual']}"
+    )
+
+    print(
+        f"Riesgo futuro: {resumen['riesgo_futuro']}"
+    )
+
+    print(
+        f"Prioridad principal: {resumen['prioridad_principal']}"
+    )
+
+    print(
+        f"Accion recomendada: {resumen['accion_recomendada']}"
+    )
+
+    print(
+        f"Acciones para atender primero: {resumen['atender_primero']}"
+    )
+
+    print(
+        f"Acciones que requieren hardware: {resumen['requiere_hardware']}"
+    )
+
+    return resumen
+
+
+def ejecutar_orquestacion_inteligente_kcd():
+
+    print(
+        "\n[KCD BLOQUE 14] ORQUESTACION INTELIGENTE KCD"
+    )
+
+    print(
+        "Modo seguro: solo lee, analiza, prioriza, agenda y registra evidencia."
+    )
+
+    evidencias = consolidar_evidencias_kcd()
+
+    ipk = calcular_ipk_kcd(
+        evidencias
+    )
+
+    acciones = priorizar_acciones_kcd(
+        evidencias,
+        ipk
+    )
+
+    decisiones = motor_decisiones_kcd(
+        acciones
+    )
+
+    plan = generar_plan_mantenimiento_kcd(
+        acciones
+    )
+
+    generar_agenda_mantenimiento_kcd(
+        acciones
+    )
+
+    resumen = generar_resumen_ejecutivo_orquestador_kcd(
+        ipk,
+        acciones,
+        decisiones
+    )
+
+    registrar_orquestacion_kcd(
+        ipk,
+        resumen
+    )
+
+    print(
+        "\n[KCD PLAN AUTOMATICO DE MANTENIMIENTO]"
+    )
+
+    for plazo, items in plan.items():
+
+        print(
+            f"\n{plazo}"
+        )
+
+        if not items:
+
+            print(
+                "- Sin acciones programadas."
+            )
+
+        for item in items:
+
+            print(
+                f"- [{item['prioridad']}] {item['accion']}"
+            )
+
+    return {
+        "ipk": ipk,
+        "acciones": acciones,
+        "decisiones": decisiones,
+        "plan": plan,
+        "resumen": resumen
+    }

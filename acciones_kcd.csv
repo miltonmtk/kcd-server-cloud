@@ -12,3 +12,4 @@ fecha_hora,accion,resultado,detalle
 2026-06-16 22:24:00,ALERTA_MONITOREO,CRITICO,IVK bajo (45.0%).
 2026-06-16 22:24:07,ALERTA_MONITOREO,ALTO,RAM elevada (83.9%).
 2026-06-16 22:45:18,PREDICCION_RIESGO,CRITICO,Atender en menos de 24 horas.
+2026-06-16 23:04:40,ORQUESTACION_KCD,CRITICO,Evaluar ampliacion fisica de memoria RAM.
