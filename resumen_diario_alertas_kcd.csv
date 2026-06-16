@@ -1,0 +1,2 @@
+fecha,total_alertas,criticas,altas,moderadas,bajas,riesgo_dia,tipos_alerta
+2026-06-16,5,2,3,0,0,CRITICO,RAM:2 | DISCO:1 | ESPACIO_LIBRE:1 | IVK:1

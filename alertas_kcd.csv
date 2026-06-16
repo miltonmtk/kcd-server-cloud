@@ -1,0 +1,6 @@
+fecha_hora,tipo,nivel,mensaje,valor,umbral,sugerencia,estado,cpu,ram,disco,espacio_libre_pct,ivk,chrome_procesos,chrome_ram_mb
+2026-06-16 22:23:59,RAM,ALTO,RAM elevada (84.1%).,84.1,75,Monitorear aplicaciones de alto consumo.,REGISTRADA,11.4,84.1,87.4,12.64,45.0,12,646.86
+2026-06-16 22:23:59,DISCO,ALTO,Disco elevado (87.4% usado).,87.4,80,Programar limpieza preventiva de almacenamiento.,REGISTRADA,11.4,84.1,87.4,12.64,45.0,12,646.86
+2026-06-16 22:23:59,ESPACIO_LIBRE,CRITICO,Espacio libre critico (12.64%).,12.64,15,Preparar accion de liberacion de espacio para Bloque 10.,REGISTRADA,11.4,84.1,87.4,12.64,45.0,12,646.86
+2026-06-16 22:23:59,IVK,CRITICO,IVK bajo (45.0%).,45.0,45,Preparar remediacion con Bloque 10 y validar con Bloque 11.,REGISTRADA,11.4,84.1,87.4,12.64,45.0,12,646.86
+2026-06-16 22:24:07,RAM,ALTO,RAM elevada (83.9%).,83.9,75,Monitorear aplicaciones de alto consumo.,REGISTRADA,10.6,83.9,87.4,12.64,45.0,12,654.2

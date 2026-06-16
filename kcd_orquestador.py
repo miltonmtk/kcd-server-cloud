@@ -4226,3 +4226,1149 @@ def ejecutar_validacion_manual_kcd(
     )
 
     return antes
+
+# ==============================================================================
+# BLOQUE 12.0 - MONITOREO CONTINUO Y ALERTAS KCD
+# ==============================================================================
+#
+# 12.1 Monitoreo continuo CPU
+# 12.2 Monitoreo continuo RAM
+# 12.3 Monitoreo continuo Disco
+# 12.4 Monitoreo continuo Chrome
+# 12.5 Alertas automaticas
+# 12.6 Registro historico de alertas
+# 12.7 Escalamiento de riesgo
+# 12.8 Resumen automatico diario
+#
+# ==============================================================================
+
+def obtener_config_monitoreo_kcd():
+
+    return {
+        "cpu_alerta": 75,
+        "cpu_critico": 90,
+        "ram_alerta": 75,
+        "ram_critico": 90,
+        "disco_alerta": 80,
+        "disco_critico": 90,
+        "espacio_libre_alerta": 25,
+        "espacio_libre_critico": 15,
+        "chrome_ram_alerta_mb": 800,
+        "chrome_ram_critico_mb": 1500,
+        "chrome_procesos_alerta": 20,
+        "chrome_procesos_critico": 40,
+        "cooldown_alertas_minutos": 30
+    }
+
+
+def medir_recursos_monitoreo_kcd():
+
+    datos = medir_velocidad_kcd()
+
+    ivk = calcular_indice_velocidad(
+        datos["cpu"],
+        datos["ram"],
+        datos["disco"]
+    )
+
+    disco = psutil.disk_usage(
+        "/"
+    )
+
+    espacio_libre_pct = round(
+        (disco.free / disco.total) * 100,
+        2
+    )
+
+    metricas = {
+        "fecha_hora": datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        "cpu": float(
+            datos.get(
+                "cpu",
+                0
+            )
+        ),
+        "ram": float(
+            datos.get(
+                "ram",
+                0
+            )
+        ),
+        "disco": float(
+            datos.get(
+                "disco",
+                0
+            )
+        ),
+        "espacio_libre_pct": espacio_libre_pct,
+        "ivk": float(
+            ivk
+        )
+    }
+
+    return metricas
+
+
+def monitorear_chrome_kcd():
+
+    total_mb = 0
+    procesos = 0
+
+    categorias = {
+        "renderizadores": 0,
+        "extensiones": 0,
+        "gpu": 0,
+        "red": 0,
+        "almacenamiento": 0,
+        "otros": 0
+    }
+
+    for proceso in psutil.process_iter(
+        [
+            "pid",
+            "name",
+            "cmdline",
+            "memory_info"
+        ]
+    ):
+
+        try:
+
+            nombre = (
+                proceso.info.get(
+                    "name",
+                    ""
+                )
+                or ""
+            ).lower()
+
+            if "chrome" not in nombre:
+                continue
+
+            procesos += 1
+
+            memoria = proceso.info.get(
+                "memory_info",
+                None
+            )
+
+            if memoria:
+
+                total_mb += round(
+                    memoria.rss / (1024 ** 2),
+                    2
+                )
+
+            cmdline = proceso.info.get(
+                "cmdline",
+                []
+            )
+
+            texto_cmd = " ".join(
+                cmdline
+            ).lower()
+
+            if "renderer" in texto_cmd:
+                categorias["renderizadores"] += 1
+
+            elif "extension" in texto_cmd:
+                categorias["extensiones"] += 1
+
+            elif "gpu" in texto_cmd:
+                categorias["gpu"] += 1
+
+            elif "network" in texto_cmd:
+                categorias["red"] += 1
+
+            elif "storage" in texto_cmd:
+                categorias["almacenamiento"] += 1
+
+            else:
+                categorias["otros"] += 1
+
+        except Exception:
+            continue
+
+    chrome = {
+        "chrome_procesos": procesos,
+        "chrome_ram_mb": round(
+            total_mb,
+            2
+        ),
+        "chrome_renderizadores": categorias["renderizadores"],
+        "chrome_extensiones": categorias["extensiones"],
+        "chrome_gpu": categorias["gpu"],
+        "chrome_red": categorias["red"],
+        "chrome_almacenamiento": categorias["almacenamiento"],
+        "chrome_otros": categorias["otros"]
+    }
+
+    return chrome
+
+
+def crear_alerta_kcd(
+    tipo,
+    nivel,
+    mensaje,
+    valor,
+    umbral,
+    sugerencia
+):
+
+    return {
+        "fecha_hora": datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        "tipo": tipo,
+        "nivel": nivel,
+        "mensaje": mensaje,
+        "valor": valor,
+        "umbral": umbral,
+        "sugerencia": sugerencia,
+        "estado": "REGISTRADA"
+    }
+
+
+def alerta_reciente_kcd(
+    tipo,
+    mensaje,
+    cooldown_minutos
+):
+
+    nombre_archivo = "alertas_kcd.csv"
+
+    if not os.path.exists(
+        nombre_archivo
+    ):
+        return False
+
+    try:
+
+        with open(
+            nombre_archivo,
+            mode="r",
+            encoding="utf-8"
+        ) as archivo:
+
+            lector = csv.DictReader(
+                archivo
+            )
+
+            ahora = datetime.now()
+
+            for fila in lector:
+
+                if (
+                    fila.get(
+                        "tipo",
+                        ""
+                    ) != tipo
+                ):
+                    continue
+
+                if (
+                    fila.get(
+                        "mensaje",
+                        ""
+                    ) != mensaje
+                ):
+                    continue
+
+                fecha_texto = fila.get(
+                    "fecha_hora",
+                    ""
+                )
+
+                try:
+
+                    fecha_alerta = datetime.strptime(
+                        fecha_texto,
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+
+                    diferencia = ahora - fecha_alerta
+
+                    if diferencia.total_seconds() < cooldown_minutos * 60:
+                        return True
+
+                except Exception:
+                    continue
+
+    except Exception:
+        return False
+
+    return False
+
+
+def registrar_alerta_kcd(
+    alerta,
+    metricas,
+    chrome
+):
+
+    nombre_archivo = "alertas_kcd.csv"
+
+    existe_archivo = os.path.exists(
+        nombre_archivo
+    )
+
+    encabezados = [
+        "fecha_hora",
+        "tipo",
+        "nivel",
+        "mensaje",
+        "valor",
+        "umbral",
+        "sugerencia",
+        "estado",
+        "cpu",
+        "ram",
+        "disco",
+        "espacio_libre_pct",
+        "ivk",
+        "chrome_procesos",
+        "chrome_ram_mb"
+    ]
+
+    fila = [
+        alerta.get(
+            "fecha_hora",
+            ""
+        ),
+        alerta.get(
+            "tipo",
+            ""
+        ),
+        alerta.get(
+            "nivel",
+            ""
+        ),
+        alerta.get(
+            "mensaje",
+            ""
+        ),
+        alerta.get(
+            "valor",
+            ""
+        ),
+        alerta.get(
+            "umbral",
+            ""
+        ),
+        alerta.get(
+            "sugerencia",
+            ""
+        ),
+        alerta.get(
+            "estado",
+            ""
+        ),
+        metricas.get(
+            "cpu",
+            0
+        ),
+        metricas.get(
+            "ram",
+            0
+        ),
+        metricas.get(
+            "disco",
+            0
+        ),
+        metricas.get(
+            "espacio_libre_pct",
+            0
+        ),
+        metricas.get(
+            "ivk",
+            0
+        ),
+        chrome.get(
+            "chrome_procesos",
+            0
+        ),
+        chrome.get(
+            "chrome_ram_mb",
+            0
+        )
+    ]
+
+    with open(
+        nombre_archivo,
+        mode="a",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.writer(
+            archivo
+        )
+
+        if not existe_archivo:
+
+            escritor.writerow(
+                encabezados
+            )
+
+        escritor.writerow(
+            fila
+        )
+
+    try:
+
+        registrar_accion_kcd(
+            "ALERTA_MONITOREO",
+            alerta.get(
+                "nivel",
+                "SIN_NIVEL"
+            ),
+            alerta.get(
+                "mensaje",
+                ""
+            )
+        )
+
+    except Exception:
+        pass
+
+
+def preparar_accion_bloque10_desde_alerta_kcd(
+    alerta,
+    metricas,
+    chrome
+):
+
+    nombre_archivo = "acciones_preparadas_bloque10_kcd.csv"
+
+    existe_archivo = os.path.exists(
+        nombre_archivo
+    )
+
+    encabezados = [
+        "fecha_hora",
+        "origen",
+        "tipo_alerta",
+        "nivel",
+        "problema",
+        "accion_sugerida",
+        "estado",
+        "cpu",
+        "ram",
+        "disco",
+        "espacio_libre_pct",
+        "ivk",
+        "chrome_procesos",
+        "chrome_ram_mb"
+    ]
+
+    fila = [
+        datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        "BLOQUE_12_MONITOREO",
+        alerta.get(
+            "tipo",
+            ""
+        ),
+        alerta.get(
+            "nivel",
+            ""
+        ),
+        alerta.get(
+            "mensaje",
+            ""
+        ),
+        alerta.get(
+            "sugerencia",
+            ""
+        ),
+        "PENDIENTE_BLOQUE_10",
+        metricas.get(
+            "cpu",
+            0
+        ),
+        metricas.get(
+            "ram",
+            0
+        ),
+        metricas.get(
+            "disco",
+            0
+        ),
+        metricas.get(
+            "espacio_libre_pct",
+            0
+        ),
+        metricas.get(
+            "ivk",
+            0
+        ),
+        chrome.get(
+            "chrome_procesos",
+            0
+        ),
+        chrome.get(
+            "chrome_ram_mb",
+            0
+        )
+    ]
+
+    with open(
+        nombre_archivo,
+        mode="a",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.writer(
+            archivo
+        )
+
+        if not existe_archivo:
+
+            escritor.writerow(
+                encabezados
+            )
+
+        escritor.writerow(
+            fila
+        )
+
+
+def detectar_anomalias_kcd(
+    metricas,
+    chrome,
+    config
+):
+
+    alertas = []
+
+    cpu = metricas.get(
+        "cpu",
+        0
+    )
+
+    ram = metricas.get(
+        "ram",
+        0
+    )
+
+    disco = metricas.get(
+        "disco",
+        0
+    )
+
+    espacio_libre = metricas.get(
+        "espacio_libre_pct",
+        100
+    )
+
+    ivk = metricas.get(
+        "ivk",
+        100
+    )
+
+    chrome_ram = chrome.get(
+        "chrome_ram_mb",
+        0
+    )
+
+    chrome_procesos = chrome.get(
+        "chrome_procesos",
+        0
+    )
+
+    if cpu >= config["cpu_critico"]:
+
+        alertas.append(
+            crear_alerta_kcd(
+                "CPU",
+                "CRITICO",
+                f"CPU en nivel critico ({cpu}%).",
+                cpu,
+                config["cpu_critico"],
+                "Revisar procesos activos antes de ejecutar acciones correctivas."
+            )
+        )
+
+    elif cpu >= config["cpu_alerta"]:
+
+        alertas.append(
+            crear_alerta_kcd(
+                "CPU",
+                "ALTO",
+                f"CPU elevada ({cpu}%).",
+                cpu,
+                config["cpu_alerta"],
+                "Monitorear consumo de CPU y preparar revision preventiva."
+            )
+        )
+
+    if ram >= config["ram_critico"]:
+
+        alertas.append(
+            crear_alerta_kcd(
+                "RAM",
+                "CRITICO",
+                f"RAM en nivel critico ({ram}%).",
+                ram,
+                config["ram_critico"],
+                "Preparar plan de liberacion de memoria para Bloque 10."
+            )
+        )
+
+    elif ram >= config["ram_alerta"]:
+
+        alertas.append(
+            crear_alerta_kcd(
+                "RAM",
+                "ALTO",
+                f"RAM elevada ({ram}%).",
+                ram,
+                config["ram_alerta"],
+                "Monitorear aplicaciones de alto consumo."
+            )
+        )
+
+    if disco >= config["disco_critico"]:
+
+        alertas.append(
+            crear_alerta_kcd(
+                "DISCO",
+                "CRITICO",
+                f"Disco en nivel critico ({disco}% usado).",
+                disco,
+                config["disco_critico"],
+                "Preparar limpieza segura de temporales y cache para Bloque 10."
+            )
+        )
+
+    elif disco >= config["disco_alerta"]:
+
+        alertas.append(
+            crear_alerta_kcd(
+                "DISCO",
+                "ALTO",
+                f"Disco elevado ({disco}% usado).",
+                disco,
+                config["disco_alerta"],
+                "Programar limpieza preventiva de almacenamiento."
+            )
+        )
+
+    if espacio_libre <= config["espacio_libre_critico"]:
+
+        alertas.append(
+            crear_alerta_kcd(
+                "ESPACIO_LIBRE",
+                "CRITICO",
+                f"Espacio libre critico ({espacio_libre}%).",
+                espacio_libre,
+                config["espacio_libre_critico"],
+                "Preparar accion de liberacion de espacio para Bloque 10."
+            )
+        )
+
+    elif espacio_libre <= config["espacio_libre_alerta"]:
+
+        alertas.append(
+            crear_alerta_kcd(
+                "ESPACIO_LIBRE",
+                "ALTO",
+                f"Espacio libre reducido ({espacio_libre}%).",
+                espacio_libre,
+                config["espacio_libre_alerta"],
+                "Revisar almacenamiento antes de que llegue a nivel critico."
+            )
+        )
+
+    if ivk <= 45:
+
+        alertas.append(
+            crear_alerta_kcd(
+                "IVK",
+                "CRITICO",
+                f"IVK bajo ({ivk}%).",
+                ivk,
+                45,
+                "Preparar remediacion con Bloque 10 y validar con Bloque 11."
+            )
+        )
+
+    elif ivk <= 65:
+
+        alertas.append(
+            crear_alerta_kcd(
+                "IVK",
+                "MODERADO",
+                f"IVK medio ({ivk}%).",
+                ivk,
+                65,
+                "Mantener seguimiento preventivo."
+            )
+        )
+
+    if chrome_ram >= config["chrome_ram_critico_mb"]:
+
+        alertas.append(
+            crear_alerta_kcd(
+                "CHROME_RAM",
+                "CRITICO",
+                f"Chrome consume RAM critica ({chrome_ram} MB).",
+                chrome_ram,
+                config["chrome_ram_critico_mb"],
+                "Avisar al usuario para revisar pestanas, extensiones o reiniciar Chrome con autorizacion."
+            )
+        )
+
+    elif chrome_ram >= config["chrome_ram_alerta_mb"]:
+
+        alertas.append(
+            crear_alerta_kcd(
+                "CHROME_RAM",
+                "ALTO",
+                f"Chrome consume RAM elevada ({chrome_ram} MB).",
+                chrome_ram,
+                config["chrome_ram_alerta_mb"],
+                "Monitorear uso de Chrome y preparar recomendacion preventiva."
+            )
+        )
+
+    if chrome_procesos >= config["chrome_procesos_critico"]:
+
+        alertas.append(
+            crear_alerta_kcd(
+                "CHROME_PROCESOS",
+                "CRITICO",
+                f"Chrome tiene demasiados procesos ({chrome_procesos}).",
+                chrome_procesos,
+                config["chrome_procesos_critico"],
+                "Avisar al usuario para revisar extensiones y pestanas abiertas."
+            )
+        )
+
+    elif chrome_procesos >= config["chrome_procesos_alerta"]:
+
+        alertas.append(
+            crear_alerta_kcd(
+                "CHROME_PROCESOS",
+                "ALTO",
+                f"Chrome tiene procesos elevados ({chrome_procesos}).",
+                chrome_procesos,
+                config["chrome_procesos_alerta"],
+                "Monitorear Chrome y preparar recomendacion para el usuario."
+            )
+        )
+
+    return alertas
+
+
+def escalar_riesgo_alertas_kcd(
+    alertas
+):
+
+    if not alertas:
+        return "BAJO"
+
+    niveles = [
+        alerta.get(
+            "nivel",
+            "BAJO"
+        )
+        for alerta in alertas
+    ]
+
+    if "CRITICO" in niveles:
+        return "CRITICO"
+
+    if "ALTO" in niveles:
+        return "ALTO"
+
+    if "MODERADO" in niveles:
+        return "MODERADO"
+
+    return "BAJO"
+
+
+def procesar_alertas_monitoreo_kcd(
+    alertas,
+    metricas,
+    chrome,
+    config
+):
+
+    alertas_registradas = []
+
+    for alerta in alertas:
+
+        tipo = alerta.get(
+            "tipo",
+            ""
+        )
+
+        mensaje = alerta.get(
+            "mensaje",
+            ""
+        )
+
+        if alerta_reciente_kcd(
+            tipo,
+            mensaje,
+            config["cooldown_alertas_minutos"]
+        ):
+
+            print(
+                f"[KCD ALERTA] Omitida por cooldown: {mensaje}"
+            )
+
+            continue
+
+        registrar_alerta_kcd(
+            alerta,
+            metricas,
+            chrome
+        )
+
+        preparar_accion_bloque10_desde_alerta_kcd(
+            alerta,
+            metricas,
+            chrome
+        )
+
+        alertas_registradas.append(
+            alerta
+        )
+
+        print(
+            f"[KCD ALERTA {alerta['nivel']}] {alerta['mensaje']}"
+        )
+
+    return alertas_registradas
+
+
+def generar_resumen_diario_alertas_kcd(
+    fecha=None
+):
+
+    if fecha is None:
+
+        fecha = datetime.now().strftime(
+            "%Y-%m-%d"
+        )
+
+    archivo_alertas = "alertas_kcd.csv"
+
+    archivo_resumen = "resumen_diario_alertas_kcd.csv"
+
+    if not os.path.exists(
+        archivo_alertas
+    ):
+
+        print(
+            "\n[KCD RESUMEN] No hay alertas registradas."
+        )
+
+        return None
+
+    total = 0
+    criticas = 0
+    altas = 0
+    moderadas = 0
+    bajas = 0
+
+    tipos = {}
+
+    try:
+
+        with open(
+            archivo_alertas,
+            mode="r",
+            encoding="utf-8"
+        ) as archivo:
+
+            lector = csv.DictReader(
+                archivo
+            )
+
+            for fila in lector:
+
+                fecha_alerta = fila.get(
+                    "fecha_hora",
+                    ""
+                )[:10]
+
+                if fecha_alerta != fecha:
+                    continue
+
+                total += 1
+
+                nivel = fila.get(
+                    "nivel",
+                    "BAJO"
+                )
+
+                tipo = fila.get(
+                    "tipo",
+                    "SIN_TIPO"
+                )
+
+                tipos[tipo] = tipos.get(
+                    tipo,
+                    0
+                ) + 1
+
+                if nivel == "CRITICO":
+                    criticas += 1
+
+                elif nivel == "ALTO":
+                    altas += 1
+
+                elif nivel == "MODERADO":
+                    moderadas += 1
+
+                else:
+                    bajas += 1
+
+    except Exception as error:
+
+        print(
+            f"\n[KCD ERROR] No se pudo generar resumen diario: {error}"
+        )
+
+        return None
+
+    if criticas > 0:
+        riesgo_dia = "CRITICO"
+
+    elif altas > 0:
+        riesgo_dia = "ALTO"
+
+    elif moderadas > 0:
+        riesgo_dia = "MODERADO"
+
+    else:
+        riesgo_dia = "BAJO"
+
+    existe_resumen = os.path.exists(
+        archivo_resumen
+    )
+
+    encabezados = [
+        "fecha",
+        "total_alertas",
+        "criticas",
+        "altas",
+        "moderadas",
+        "bajas",
+        "riesgo_dia",
+        "tipos_alerta"
+    ]
+
+    fila = [
+        fecha,
+        total,
+        criticas,
+        altas,
+        moderadas,
+        bajas,
+        riesgo_dia,
+        " | ".join(
+            [
+                f"{clave}:{valor}"
+                for clave, valor in tipos.items()
+            ]
+        )
+    ]
+
+    with open(
+        archivo_resumen,
+        mode="a",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.writer(
+            archivo
+        )
+
+        if not existe_resumen:
+
+            escritor.writerow(
+                encabezados
+            )
+
+        escritor.writerow(
+            fila
+        )
+
+    print(
+        "\n[KCD RESUMEN DIARIO]"
+    )
+
+    print(
+        f"Fecha: {fecha}"
+    )
+
+    print(
+        f"Total alertas: {total}"
+    )
+
+    print(
+        f"Riesgo del dia: {riesgo_dia}"
+    )
+
+    return {
+        "fecha": fecha,
+        "total_alertas": total,
+        "criticas": criticas,
+        "altas": altas,
+        "moderadas": moderadas,
+        "bajas": bajas,
+        "riesgo_dia": riesgo_dia,
+        "tipos_alerta": tipos
+    }
+
+
+def ejecutar_monitoreo_continuo_kcd(
+    ciclos=5,
+    intervalo_segundos=10,
+    config=None
+):
+
+    print(
+        "\n[KCD BLOQUE 12] MONITOREO CONTINUO Y ALERTAS"
+    )
+
+    if config is None:
+
+        config = obtener_config_monitoreo_kcd()
+
+    try:
+
+        ciclos = int(
+            ciclos
+        )
+
+    except Exception:
+
+        ciclos = 5
+
+    try:
+
+        intervalo_segundos = int(
+            intervalo_segundos
+        )
+
+    except Exception:
+
+        intervalo_segundos = 10
+
+    if ciclos < 1:
+
+        ciclos = 1
+
+    if ciclos > 288:
+
+        ciclos = 288
+
+    if intervalo_segundos < 5:
+
+        intervalo_segundos = 5
+
+    print(
+        f"Ciclos programados: {ciclos}"
+    )
+
+    print(
+        f"Intervalo: {intervalo_segundos} segundos"
+    )
+
+    print(
+        "Modo seguro: no se cierran procesos, no se cambian servicios, no se eliminan archivos."
+    )
+
+    historial_alertas = []
+
+    for ciclo in range(
+        1,
+        ciclos + 1
+    ):
+
+        print(
+            f"\n[KCD MONITOREO] Ciclo {ciclo}/{ciclos}"
+        )
+
+        metricas = medir_recursos_monitoreo_kcd()
+
+        chrome = monitorear_chrome_kcd()
+
+        print(
+            f"CPU: {metricas['cpu']}% | RAM: {metricas['ram']}% | Disco: {metricas['disco']}% | IVK: {metricas['ivk']}%"
+        )
+
+        print(
+            f"Chrome: {chrome['chrome_procesos']} procesos | {chrome['chrome_ram_mb']} MB"
+        )
+
+        alertas = detectar_anomalias_kcd(
+            metricas,
+            chrome,
+            config
+        )
+
+        riesgo = escalar_riesgo_alertas_kcd(
+            alertas
+        )
+
+        print(
+            f"Riesgo del ciclo: {riesgo}"
+        )
+
+        alertas_registradas = procesar_alertas_monitoreo_kcd(
+            alertas,
+            metricas,
+            chrome,
+            config
+        )
+
+        historial_alertas.extend(
+            alertas_registradas
+        )
+
+        if ciclo < ciclos:
+
+            time.sleep(
+                intervalo_segundos
+            )
+
+    resumen = {
+        "ciclos": ciclos,
+        "alertas_registradas": len(
+            historial_alertas
+        ),
+        "riesgo_final": escalar_riesgo_alertas_kcd(
+            historial_alertas
+        )
+    }
+
+    print(
+        "\n[KCD MONITOREO FINALIZADO]"
+    )
+
+    print(
+        f"Ciclos ejecutados: {resumen['ciclos']}"
+    )
+
+    print(
+        f"Alertas registradas: {resumen['alertas_registradas']}"
+    )
+
+    print(
+        f"Riesgo final: {resumen['riesgo_final']}"
+    )
+
+    generar_resumen_diario_alertas_kcd()
+
+    return resumen

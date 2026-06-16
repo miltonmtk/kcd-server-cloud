@@ -6,3 +6,8 @@ fecha_hora,accion,resultado,detalle
 2026-06-12 17:42:12,EVALUACION_TEMPORALES,OK,162 archivos detectados; 22.13 MB recuperables
 2026-06-12 17:42:12,LIMPIEZA_TEMPORALES,OK,1 archivos procesados; 0.0 MB recuperados
 2026-06-12 17:47:04,EVALUACION_TEMPORALES,OK,162 archivos detectados; 22.13 MB recuperables
+2026-06-16 22:23:59,ALERTA_MONITOREO,ALTO,RAM elevada (84.1%).
+2026-06-16 22:23:59,ALERTA_MONITOREO,ALTO,Disco elevado (87.4% usado).
+2026-06-16 22:24:00,ALERTA_MONITOREO,CRITICO,Espacio libre critico (12.64%).
+2026-06-16 22:24:00,ALERTA_MONITOREO,CRITICO,IVK bajo (45.0%).
+2026-06-16 22:24:07,ALERTA_MONITOREO,ALTO,RAM elevada (83.9%).
