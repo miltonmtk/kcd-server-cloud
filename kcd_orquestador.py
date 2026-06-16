@@ -1793,12 +1793,13 @@ def verificar_licencia_remota(
 
 
 # ==============================================================================
-# BLOQUE 8.0 - REPORTES PDF
+# BLOQUE 8.0 - REPORTES PDF EJECUTIVOS KCD
 # ==============================================================================
 #
 # 8.1 Clase PDF KCD
-# 8.2 Generador de informes
-# 8.3 Diagnóstico Ejecutivo
+# 8.2 Generador de informes ejecutivos
+# 8.3 Diagnostico ejecutivo unificado
+# 8.4 Plan de accion ejecutivo
 #
 # ==============================================================================
 
@@ -1806,24 +1807,63 @@ class PDF_KCD(FPDF):
 
     def header(self):
 
-        self.set_fill_color(24, 43, 73)
-        self.rect(0, 0, 210, 20, "F")
+        self.set_fill_color(
+            24,
+            43,
+            73
+        )
 
-        self.set_text_color(255, 255, 255)
-        self.set_font("Helvetica", "B", 14)
+        self.rect(
+            0,
+            0,
+            210,
+            28,
+            "F"
+        )
+
+        self.set_text_color(
+            255,
+            255,
+            255
+        )
+
+        self.set_font(
+            "Helvetica",
+            "B",
+            14
+        )
 
         self.cell(
             0,
-            10,
-            "INFORME DE CONTINUIDAD DIGITAL Y AUDITORIA",
+            8,
+            "INFORME EJECUTIVO DE CONTINUIDAD DIGITAL",
+            ln=1,
             align="C"
         )
 
-        self.ln(15)
+        self.set_font(
+            "Helvetica",
+            "",
+            9
+        )
+
+        self.cell(
+            0,
+            6,
+            "Escudo KCD - Auditoria preventiva y correctiva del equipo",
+            ln=1,
+            align="C"
+        )
+
+        self.ln(
+            14
+        )
 
     def footer(self):
 
-        self.set_y(-15)
+        self.set_y(
+            -15
+        )
 
         self.set_font(
             "Helvetica",
@@ -1868,7 +1908,7 @@ class PDF_KCD(FPDF):
         )
 
         self.cell(
-            190,
+            0,
             8,
             titulo,
             border=0,
@@ -1876,16 +1916,129 @@ class PDF_KCD(FPDF):
             fill=True
         )
 
-        self.ln(2)
+        self.ln(
+            2
+        )
+
+    def agregar_texto(
+        self,
+        texto
+    ):
+
+        self.set_font(
+            "Helvetica",
+            "",
+            10
+        )
+
+        self.set_text_color(
+            40,
+            40,
+            40
+        )
+
+        texto_limpio = str(
+            texto
+        ).replace(
+            "\n",
+            " "
+        )
+
+        self.multi_cell(
+            0,
+            6,
+            texto_limpio
+        )
+
+        self.ln(
+            2
+        )
+
+    def agregar_item(
+        self,
+        texto
+    ):
+
+        self.set_font(
+            "Helvetica",
+            "",
+            10
+        )
+
+        self.set_text_color(
+            40,
+            40,
+            40
+        )
+
+        texto_limpio = str(
+            texto
+        ).replace(
+            "\n",
+            " "
+        )
+
+        self.cell(
+            0,
+            6,
+            f"- {texto_limpio[:110]}",
+            ln=1
+        )
+
+    def agregar_metrica(
+        self,
+        etiqueta,
+        valor
+    ):
+
+        self.set_font(
+            "Helvetica",
+            "B",
+            10
+        )
+
+        self.set_text_color(
+            24,
+            43,
+            73
+        )
+
+        self.cell(
+            45,
+            6,
+            f"{etiqueta}:",
+            ln=0
+        )
+
+        self.set_font(
+            "Helvetica",
+            "",
+            10
+        )
+
+        self.set_text_color(
+            40,
+            40,
+            40
+        )
+
+        self.cell(
+            0,
+            6,
+            str(
+                valor
+            ),
+            ln=1
+        )
 
 
 def generar_reporte_pdf_real():
 
     print(
-        "[PROCESO]: Compilando informe KCD..."
+        "[PROCESO]: Compilando informe ejecutivo KCD..."
     )
 
-    nombre_pdf = "reporte_continuity_digital.pdf"
+    nombre_pdf = "reporte_ejecutivo_kcd.pdf"
 
     datos = medir_velocidad_kcd()
 
@@ -1900,7 +2053,9 @@ def generar_reporte_pdf_real():
         2
     )
 
-    disco = psutil.disk_usage("/")
+    disco = psutil.disk_usage(
+        "/"
+    )
 
     espacio_libre_pct = round(
         (disco.free / disco.total) * 100,
@@ -1921,6 +2076,12 @@ def generar_reporte_pdf_real():
         margin=15
     )
 
+    pdf.set_margins(
+        12,
+        12,
+        12
+    )
+
     pdf.add_page()
 
     pdf.set_font(
@@ -1929,122 +2090,172 @@ def generar_reporte_pdf_real():
         10
     )
 
+    pdf.set_text_color(
+        40,
+        40,
+        40
+    )
+
     pdf.cell(
         0,
         6,
-        "ID Reporte: KCD-LAB-01",
+        "ID Reporte: KCD-EJECUTIVO-01",
         ln=1
     )
 
     pdf.cell(
         0,
         6,
-        "Modulo: Continuidad Digital",
+        "Modulo: Continuidad Digital y Mantenimiento Preventivo",
         ln=1
     )
 
-    pdf.ln(3)
+    pdf.cell(
+        0,
+        6,
+        f"Fecha de generacion: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+        ln=1
+    )
+
+    pdf.ln(
+        4
+    )
 
     pdf.agregar_seccion_titulo(
-        "PARTE 1 - MEDICION REAL DEL EQUIPO"
+        "1. RESUMEN EJECUTIVO"
     )
 
-    pdf.cell(
-        0,
-        6,
-        f"CPU: {datos['cpu']}%",
-        ln=1
+    pdf.agregar_texto(
+        diagnostico["resumen"]
     )
-
-    pdf.cell(
-        0,
-        6,
-        f"RAM: {datos['ram']}%",
-        ln=1
-    )
-
-    pdf.cell(
-        0,
-        6,
-        f"DISCO: {datos['disco']}%",
-        ln=1
-    )
-
-    pdf.cell(
-        0,
-        6,
-        f"IVK: {ivk}%",
-        ln=1
-    )
-
-    pdf.ln(3)
 
     pdf.agregar_seccion_titulo(
-        "PARTE 2 - DIAGNOSTICO EJECUTIVO"
+        "2. NIVEL DE RIESGO"
     )
 
-    pdf.cell(
-        0,
-        6,
-        f"Riesgo General: {diagnostico['riesgo']}",
-        ln=1
+    pdf.agregar_metrica(
+        "Riesgo general",
+        diagnostico["riesgo"]
     )
 
-    pdf.cell(
-        0,
-        6,
-        f"Hallazgo Principal: {diagnostico['hallazgo']}",
-        ln=1
+    pdf.agregar_metrica(
+        "IVK",
+        f"{ivk}%"
     )
 
-    pdf.ln(3)
+    pdf.agregar_metrica(
+        "CPU",
+        f"{datos['cpu']}%"
+    )
+
+    pdf.agregar_metrica(
+        "RAM",
+        f"{datos['ram']}%"
+    )
+
+    pdf.agregar_metrica(
+        "Disco usado",
+        f"{datos['disco']}%"
+    )
+
+    pdf.agregar_metrica(
+        "RAM instalada",
+        f"{ram_total} GB"
+    )
+
+    pdf.agregar_metrica(
+        "Espacio libre",
+        f"{espacio_libre_pct}%"
+    )
+
+    pdf.ln(
+        2
+    )
 
     pdf.agregar_seccion_titulo(
-        "PARTE 3 - PLAN DE ACCION"
+        "3. HALLAZGO PRINCIPAL"
     )
 
-    if ram_total < 4:
+    pdf.agregar_texto(
+        diagnostico["hallazgo"]
+    )
 
-        pdf.cell(
-            0,
-            6,
-            "- Ampliar memoria RAM.",
-            ln=1
+    pdf.agregar_seccion_titulo(
+        "4. PROBLEMAS DETECTADOS"
+    )
+
+    for problema in diagnostico["problemas"]:
+
+        pdf.agregar_item(
+            problema
         )
 
-    if espacio_libre_pct < 20:
+    pdf.ln(
+        2
+    )
 
-        pdf.cell(
-            0,
-            6,
-            "- Liberar espacio en disco.",
-            ln=1
+    pdf.agregar_seccion_titulo(
+        "5. ACCIONES RECOMENDADAS"
+    )
+
+    for accion in diagnostico["acciones"]:
+
+        pdf.agregar_item(
+            accion
         )
 
-    if ivk <= 45:
+    pdf.ln(
+        2
+    )
 
-        pdf.cell(
-            0,
-            6,
-            "- Ejecutar optimizacion preventiva.",
-            ln=1
+    pdf.agregar_seccion_titulo(
+        "6. BENEFICIOS ESPERADOS"
+    )
+
+    for beneficio in diagnostico["beneficios"]:
+
+        pdf.agregar_item(
+            beneficio
         )
+
+    pdf.ln(
+        2
+    )
+
+    pdf.agregar_seccion_titulo(
+        "7. CONCLUSION EJECUTIVA"
+    )
+
+    pdf.agregar_texto(
+        diagnostico["conclusion"]
+    )
 
     pdf.output(
         nombre_pdf
     )
 
-    print("\n========================================================")
-    print(f"[OK KCD]: '{nombre_pdf}' generado correctamente.")
-    print(f"[IVK]: Indice de Velocidad KCD: {ivk}%")
-    print("========================================================")
+    print(
+        "\n========================================================"
+    )
+
+    print(
+        f"[OK KCD]: '{nombre_pdf}' generado correctamente."
+    )
+
+    print(
+        f"[RIESGO]: {diagnostico['riesgo']}"
+    )
+
+    print(
+        f"[IVK]: Indice de Velocidad KCD: {ivk}%"
+    )
+
+    print(
+        "========================================================"
+    )
 
     return True
 
-
-# ------------------------------------------------------------------------------
-# 8.3 DIAGNOSTICO EJECUTIVO UNIFICADO
-# ------------------------------------------------------------------------------
 
 def diagnostico_ejecutivo_kcd(
     datos,
@@ -2054,55 +2265,277 @@ def diagnostico_ejecutivo_kcd(
 ):
 
     print(
-        "\n[KCD LAB-09A] DIAGNÓSTICO EJECUTIVO"
+        "\n[KCD LAB-09A] DIAGNOSTICO EJECUTIVO"
     )
 
-    riesgo = "BAJO"
+    cpu = float(
+        datos.get(
+            "cpu",
+            0
+        )
+    )
 
-    if (
-        ram_total < 4
-        or espacio_libre_pct < 15
-        or ivk <= 45
-    ):
-        riesgo = "ALTO"
+    ram = float(
+        datos.get(
+            "ram",
+            0
+        )
+    )
 
-    elif (
-        ram_total < 8
-        or espacio_libre_pct < 25
-    ):
-        riesgo = "MODERADO"
+    disco = float(
+        datos.get(
+            "disco",
+            0
+        )
+    )
+
+    try:
+
+        ivk = float(
+            ivk
+        )
+
+    except Exception:
+
+        ivk = 100
+
+    problemas = []
+    acciones = []
+
+    if ivk <= 45:
+
+        problemas.append(
+            f"Indice IVK bajo ({ivk}%). El equipo requiere intervencion prioritaria."
+        )
+
+        acciones.append(
+            "Ejecutar optimizacion preventiva y correctiva del sistema."
+        )
+
+    elif ivk <= 65:
+
+        problemas.append(
+            f"Indice IVK medio ({ivk}%). Se recomienda seguimiento preventivo."
+        )
+
+        acciones.append(
+            "Programar mantenimiento preventivo y revisar consumo de recursos."
+        )
+
+    if cpu >= 85:
+
+        problemas.append(
+            f"Consumo alto de CPU ({cpu}%)."
+        )
+
+        acciones.append(
+            "Revisar procesos activos y cerrar tareas no esenciales."
+        )
+
+    elif cpu >= 70:
+
+        problemas.append(
+            f"Consumo moderado de CPU ({cpu}%)."
+        )
+
+        acciones.append(
+            "Monitorear aplicaciones en segundo plano."
+        )
+
+    if ram >= 85:
+
+        problemas.append(
+            f"Consumo alto de RAM ({ram}%)."
+        )
+
+        acciones.append(
+            "Liberar memoria RAM y revisar programas de alto consumo."
+        )
+
+    elif ram >= 70:
+
+        problemas.append(
+            f"Consumo moderado de RAM ({ram}%)."
+        )
+
+        acciones.append(
+            "Aplicar mantenimiento preventivo sobre memoria RAM."
+        )
+
+    if disco >= 90:
+
+        problemas.append(
+            f"Uso critico de disco ({disco}%)."
+        )
+
+        acciones.append(
+            "Liberar espacio en disco y eliminar archivos temporales."
+        )
+
+    elif disco >= 80:
+
+        problemas.append(
+            f"Uso elevado de disco ({disco}%)."
+        )
+
+        acciones.append(
+            "Programar limpieza preventiva de disco."
+        )
 
     if ram_total < 4:
 
-        principal = (
-            f"Memoria RAM insuficiente ({ram_total} GB)."
+        problemas.append(
+            f"Memoria RAM instalada insuficiente ({ram_total} GB)."
+        )
+
+        acciones.append(
+            "Evaluar ampliacion de memoria RAM."
+        )
+
+    elif ram_total < 8:
+
+        problemas.append(
+            f"Memoria RAM instalada limitada ({ram_total} GB)."
+        )
+
+        acciones.append(
+            "Considerar ampliacion de RAM para mejorar continuidad operativa."
+        )
+
+    if espacio_libre_pct < 15:
+
+        problemas.append(
+            f"Espacio libre critico ({espacio_libre_pct}%)."
+        )
+
+        acciones.append(
+            "Liberar espacio de almacenamiento de forma prioritaria."
+        )
+
+    elif espacio_libre_pct < 25:
+
+        problemas.append(
+            f"Espacio libre reducido ({espacio_libre_pct}%)."
+        )
+
+        acciones.append(
+            "Realizar limpieza preventiva de almacenamiento."
+        )
+
+    if not problemas:
+
+        problemas.append(
+            "No se detectan problemas criticos en la medicion actual."
+        )
+
+    if not acciones:
+
+        acciones.append(
+            "Continuar monitoreo preventivo periodico con ESCUDO KCD."
+        )
+
+    if (
+        ivk <= 45
+        or cpu >= 85
+        or ram >= 85
+        or disco >= 90
+        or ram_total < 4
+        or espacio_libre_pct < 15
+    ):
+
+        riesgo = "ALTO"
+
+    elif (
+        ivk <= 65
+        or cpu >= 70
+        or ram >= 70
+        or disco >= 80
+        or ram_total < 8
+        or espacio_libre_pct < 25
+    ):
+
+        riesgo = "MODERADO"
+
+    else:
+
+        riesgo = "BAJO"
+
+    if ivk <= 45:
+
+        hallazgo = (
+            f"El equipo presenta un IVK bajo ({ivk}%), lo que indica perdida de rendimiento y necesidad de correccion."
+        )
+
+    elif ram_total < 4:
+
+        hallazgo = (
+            f"La memoria RAM instalada es insuficiente ({ram_total} GB), limitando la estabilidad operativa."
         )
 
     elif espacio_libre_pct < 15:
 
-        principal = (
-            f"Espacio libre reducido ({espacio_libre_pct}%)."
+        hallazgo = (
+            f"El almacenamiento disponible es critico ({espacio_libre_pct}%), afectando la continuidad digital."
+        )
+
+    elif ram >= 85:
+
+        hallazgo = (
+            f"El consumo de RAM es alto ({ram}%), lo que puede causar lentitud o bloqueos."
+        )
+
+    elif cpu >= 85:
+
+        hallazgo = (
+            f"El consumo de CPU es alto ({cpu}%), afectando la respuesta del sistema."
         )
 
     else:
 
-        principal = (
-            "No se detectan limitaciones críticas."
+        hallazgo = (
+            "El equipo se encuentra operativo y no presenta limitaciones criticas en la medicion actual."
         )
+
+    beneficios = [
+        "Mejorar la estabilidad general del equipo.",
+        "Reducir riesgos de lentitud, bloqueo o perdida de continuidad.",
+        "Prevenir fallas por saturacion de CPU, RAM o disco.",
+        "Contar con evidencia tecnica para decisiones de mantenimiento.",
+        "Fortalecer la continuidad digital del usuario o negocio."
+    ]
+
+    resumen = (
+        f"ESCUDO KCD realizo una evaluacion del estado actual del equipo. "
+        f"El nivel de riesgo identificado es {riesgo}. "
+        f"El IVK registrado fue de {ivk}%, con CPU en {cpu}%, RAM en {ram}% "
+        f"y disco usado en {disco}%. "
+        f"El objetivo del informe es convertir la medicion tecnica en una lectura ejecutiva "
+        f"para tomar decisiones de mantenimiento preventivo o correctivo."
+    )
+
+    conclusion = (
+        f"Con base en la evaluacion realizada, el equipo presenta un nivel de riesgo {riesgo}. "
+        f"La accion recomendada es atender el hallazgo principal y ejecutar el plan de accion sugerido. "
+        f"Este reporte permite priorizar decisiones tecnicas, mejorar el rendimiento y sostener la continuidad digital."
+    )
 
     print(
         f"Riesgo general: {riesgo}"
     )
 
     print(
-        f"Hallazgo principal: {principal}"
+        f"Hallazgo principal: {hallazgo}"
     )
 
     return {
         "riesgo": riesgo,
-        "hallazgo": principal
+        "hallazgo": hallazgo,
+        "problemas": problemas,
+        "acciones": acciones,
+        "beneficios": beneficios,
+        "resumen": resumen,
+        "conclusion": conclusion
     }
-
 # ==============================================================================
 # BLOQUE 9.0 - ORQUESTADOR PRINCIPAL
 # ==============================================================================
