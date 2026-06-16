@@ -2678,14 +2678,312 @@ if __name__ == "__main__":
 
 
 # ==============================================================================
-# BLOQUE 10.0 - OPTIMIZACIÓN Y CORRECCIÓN
+# ==============================================================================
+# BLOQUE 10.0 - MOTOR DE REMEDIACION KCD
 # ==============================================================================
 #
-# 10.1 Clasificación de problemas detectados
-# 10.2 Plan de acción KCD
-# 10.3 Evidencia de corrección
+# 10.1 Clasificacion avanzada de problemas detectados
+# 10.2 Priorizacion de remediacion
+# 10.3 Planes de accion automaticos
+# 10.4 Registro de evidencia
+# 10.5 Impacto esperado
+# 10.6 Control de acciones duplicadas
+# 10.7 Preparacion para validacion posterior
 #
 # ==============================================================================
+
+def obtener_prioridad_kcd(
+    problema,
+    ivk,
+    ram_total,
+    espacio_libre_pct
+):
+
+    if (
+        ivk <= 30
+        or espacio_libre_pct < 10
+        or ram_total < 4
+    ):
+        return "CRITICA"
+
+    if (
+        ivk <= 45
+        or espacio_libre_pct < 15
+    ):
+        return "ALTA"
+
+    if (
+        ivk <= 65
+        or espacio_libre_pct < 25
+        or ram_total < 8
+    ):
+        return "MEDIA"
+
+    return "BAJA"
+
+
+def accion_ya_registrada_kcd(
+    problema,
+    accion
+):
+
+    nombre_archivo = "evidencia_remediacion_kcd.csv"
+
+    if not os.path.exists(
+        nombre_archivo
+    ):
+        return False
+
+    try:
+
+        with open(
+            nombre_archivo,
+            mode="r",
+            encoding="utf-8"
+        ) as archivo:
+
+            lector = csv.DictReader(
+                archivo
+            )
+
+            for fila in lector:
+
+                problema_registrado = fila.get(
+                    "problema",
+                    ""
+                )
+
+                accion_registrada = fila.get(
+                    "accion_aplicada",
+                    ""
+                )
+
+                estado_registrado = fila.get(
+                    "estado",
+                    ""
+                )
+
+                if (
+                    problema_registrado == problema
+                    and accion_registrada == accion
+                    and estado_registrado in [
+                        "PENDIENTE",
+                        "REGISTRADA",
+                        "EN_SEGUIMIENTO"
+                    ]
+                ):
+                    return True
+
+    except Exception:
+        return False
+
+    return False
+
+
+def registrar_evidencia_remediacion_kcd(
+    problema,
+    accion_aplicada,
+    resultado,
+    estado,
+    categoria,
+    prioridad,
+    impacto,
+    antes
+):
+
+    nombre_archivo = "evidencia_remediacion_kcd.csv"
+
+    existe_archivo = os.path.exists(
+        nombre_archivo
+    )
+
+    encabezados = [
+        "fecha_hora",
+        "problema",
+        "accion_aplicada",
+        "resultado",
+        "estado",
+        "categoria",
+        "prioridad",
+        "ram_liberada_estimada_mb",
+        "espacio_recuperable_estimado_mb",
+        "mejora_ivk_esperada",
+        "antes_ivk",
+        "antes_ram_total_gb",
+        "antes_espacio_libre_pct"
+    ]
+
+    fila = [
+        datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        problema,
+        accion_aplicada,
+        resultado,
+        estado,
+        categoria,
+        prioridad,
+        impacto.get(
+            "ram_liberada_estimada_mb",
+            0
+        ),
+        impacto.get(
+            "espacio_recuperable_estimado_mb",
+            0
+        ),
+        impacto.get(
+            "mejora_ivk_esperada",
+            0
+        ),
+        antes.get(
+            "ivk",
+            0
+        ),
+        antes.get(
+            "ram_total",
+            0
+        ),
+        antes.get(
+            "espacio_libre_pct",
+            0
+        )
+    ]
+
+    with open(
+        nombre_archivo,
+        mode="a",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.writer(
+            archivo
+        )
+
+        if not existe_archivo:
+
+            escritor.writerow(
+                encabezados
+            )
+
+        escritor.writerow(
+            fila
+        )
+
+
+def calcular_impacto_esperado_kcd(
+    categoria,
+    problema,
+    ivk,
+    ram_total,
+    espacio_libre_pct
+):
+
+    impacto = {
+        "ram_liberada_estimada_mb": 0,
+        "espacio_recuperable_estimado_mb": 0,
+        "mejora_ivk_esperada": 0
+    }
+
+    texto = problema.lower()
+
+    if (
+        "disco" in texto
+        or "espacio" in texto
+        or categoria == "SOFTWARE"
+    ):
+
+        if espacio_libre_pct < 10:
+            impacto["espacio_recuperable_estimado_mb"] = 3000
+            impacto["mejora_ivk_esperada"] = 15
+
+        elif espacio_libre_pct < 15:
+            impacto["espacio_recuperable_estimado_mb"] = 2000
+            impacto["mejora_ivk_esperada"] = 10
+
+        elif espacio_libre_pct < 25:
+            impacto["espacio_recuperable_estimado_mb"] = 1000
+            impacto["mejora_ivk_esperada"] = 5
+
+    if (
+        "ram" in texto
+        or "memoria" in texto
+    ):
+
+        if ram_total < 4:
+            impacto["ram_liberada_estimada_mb"] = 300
+            impacto["mejora_ivk_esperada"] = max(
+                impacto["mejora_ivk_esperada"],
+                8
+            )
+
+        elif ram_total < 8:
+            impacto["ram_liberada_estimada_mb"] = 200
+            impacto["mejora_ivk_esperada"] = max(
+                impacto["mejora_ivk_esperada"],
+                5
+            )
+
+    if ivk <= 45:
+
+        impacto["ram_liberada_estimada_mb"] = max(
+            impacto["ram_liberada_estimada_mb"],
+            250
+        )
+
+        impacto["mejora_ivk_esperada"] = max(
+            impacto["mejora_ivk_esperada"],
+            12
+        )
+
+    elif ivk <= 65:
+
+        impacto["mejora_ivk_esperada"] = max(
+            impacto["mejora_ivk_esperada"],
+            6
+        )
+
+    return impacto
+
+
+def crear_problema_kcd(
+    categoria,
+    problema,
+    ivk,
+    ram_total,
+    espacio_libre_pct,
+    acciones
+):
+
+    prioridad = obtener_prioridad_kcd(
+        problema,
+        ivk,
+        ram_total,
+        espacio_libre_pct
+    )
+
+    impacto = calcular_impacto_esperado_kcd(
+        categoria,
+        problema,
+        ivk,
+        ram_total,
+        espacio_libre_pct
+    )
+
+    return {
+        "categoria": categoria,
+        "problema": problema,
+        "prioridad": prioridad,
+        "acciones": acciones,
+        "impacto": impacto,
+        "antes": {
+            "ivk": ivk,
+            "ram_total": ram_total,
+            "espacio_libre_pct": espacio_libre_pct
+        },
+        "estado": "PENDIENTE"
+    }
+
 
 def clasificar_problemas_kcd(
     ivk,
@@ -2694,67 +2992,216 @@ def clasificar_problemas_kcd(
 ):
 
     print(
-        "\n[KCD LAB-10A] CLASIFICACIÓN DE PROBLEMAS"
+        "\n[KCD LAB-10A] CLASIFICACION AVANZADA DE PROBLEMAS"
     )
+
+    try:
+
+        ivk = float(
+            ivk
+        )
+
+    except Exception:
+
+        ivk = 100
+
+    try:
+
+        ram_total = float(
+            ram_total
+        )
+
+    except Exception:
+
+        ram_total = 0
+
+    try:
+
+        espacio_libre_pct = float(
+            espacio_libre_pct
+        )
+
+    except Exception:
+
+        espacio_libre_pct = 100
+
+    software = []
+    configuracion = []
+    usuario = []
+    hardware = []
+
+    if espacio_libre_pct < 25:
+
+        software.append(
+            crear_problema_kcd(
+                "SOFTWARE",
+                f"Espacio libre reducido en disco ({espacio_libre_pct}%).",
+                ivk,
+                ram_total,
+                espacio_libre_pct,
+                [
+                    "Ejecutar limpieza de archivos temporales.",
+                    "Eliminar caches innecesarias.",
+                    "Vaciar papelera de reciclaje."
+                ]
+            )
+        )
+
+        configuracion.append(
+            crear_problema_kcd(
+                "CONFIGURACION",
+                "Sistema sin optimizacion automatica de almacenamiento.",
+                ivk,
+                ram_total,
+                espacio_libre_pct,
+                [
+                    "Activar sensor de almacenamiento si esta disponible.",
+                    "Configurar limpieza periodica de temporales.",
+                    "Revisar aplicaciones de inicio que generan cache excesiva."
+                ]
+            )
+        )
+
+        usuario.append(
+            crear_problema_kcd(
+                "USUARIO",
+                "Archivos personales o descargas pueden estar ocupando espacio significativo.",
+                ivk,
+                ram_total,
+                espacio_libre_pct,
+                [
+                    "Revisar carpeta Descargas.",
+                    "Mover archivos grandes a respaldo externo.",
+                    "Eliminar duplicados y archivos no necesarios."
+                ]
+            )
+        )
+
+    if ivk <= 65:
+
+        software.append(
+            crear_problema_kcd(
+                "SOFTWARE",
+                f"IVK por debajo del nivel optimo ({ivk}%).",
+                ivk,
+                ram_total,
+                espacio_libre_pct,
+                [
+                    "Ejecutar optimizacion preventiva del sistema.",
+                    "Revisar procesos con consumo elevado.",
+                    "Registrar evidencia antes de aplicar correcciones."
+                ]
+            )
+        )
+
+        configuracion.append(
+            crear_problema_kcd(
+                "CONFIGURACION",
+                "Configuracion del sistema puede estar afectando el rendimiento.",
+                ivk,
+                ram_total,
+                espacio_libre_pct,
+                [
+                    "Revisar programas de inicio.",
+                    "Validar servicios no esenciales.",
+                    "Ajustar configuraciones de rendimiento de Windows."
+                ]
+            )
+        )
+
+    if ram_total < 8:
+
+        hardware.append(
+            crear_problema_kcd(
+                "HARDWARE",
+                f"Memoria RAM fisica limitada ({ram_total} GB).",
+                ivk,
+                ram_total,
+                espacio_libre_pct,
+                [
+                    "Evaluar ampliacion fisica de memoria RAM.",
+                    "Verificar compatibilidad del equipo.",
+                    "Programar intervencion tecnica si aplica."
+                ]
+            )
+        )
+
+        usuario.append(
+            crear_problema_kcd(
+                "USUARIO",
+                "Uso simultaneo de aplicaciones puede saturar la memoria disponible.",
+                ivk,
+                ram_total,
+                espacio_libre_pct,
+                [
+                    "Cerrar aplicaciones no utilizadas.",
+                    "Evitar abrir muchas pestanas del navegador.",
+                    "Reiniciar aplicaciones pesadas cuando sea necesario."
+                ]
+            )
+        )
 
     corregibles = []
 
+    for item in software:
+        corregibles.append(
+            item["problema"]
+        )
+
+    for item in configuracion:
+        corregibles.append(
+            item["problema"]
+        )
+
+    for item in usuario:
+        corregibles.append(
+            item["problema"]
+        )
+
     no_corregibles = []
 
-    if espacio_libre_pct < 20:
-
-        corregibles.append(
-            "Liberación de espacio en disco"
-        )
-
-    if ivk <= 45:
-
-        corregibles.append(
-            "Optimización preventiva del sistema"
-        )
-
-    if ram_total < 4:
-
+    for item in hardware:
         no_corregibles.append(
-            "Ampliación física de memoria RAM"
+            item["problema"]
         )
 
-    print("\nCORREGIBLES POR SOFTWARE:")
-
-    if corregibles:
-
-        for item in corregibles:
-
-            print(
-                f"- {item}"
-            )
-
-    else:
-
-        print(
-            "- Ninguno"
-        )
-
-    print("\nNO CORREGIBLES POR SOFTWARE:")
-
-    if no_corregibles:
-
-        for item in no_corregibles:
-
-            print(
-                f"- {item}"
-            )
-
-    else:
-
-        print(
-            "- Ninguno"
-        )
-
-    return {
+    clasificacion = {
+        "software": software,
+        "configuracion": configuracion,
+        "usuario": usuario,
+        "hardware": hardware,
         "corregibles": corregibles,
         "no_corregibles": no_corregibles
     }
+
+    categorias = [
+        ("SOFTWARE", software),
+        ("CONFIGURACION", configuracion),
+        ("USUARIO", usuario),
+        ("HARDWARE", hardware)
+    ]
+
+    for nombre_categoria, elementos in categorias:
+
+        print(
+            f"\nPROBLEMAS CORREGIBLES POR {nombre_categoria}:"
+        )
+
+        if elementos:
+
+            for item in elementos:
+
+                print(
+                    f"- [{item['prioridad']}] {item['problema']}"
+                )
+
+        else:
+
+            print(
+                "- Ninguno"
+            )
+
+    return clasificacion
 
 
 def generar_plan_accion_kcd(
@@ -2762,49 +3209,91 @@ def generar_plan_accion_kcd(
 ):
 
     print(
-        "\n[KCD LAB-10B] PLAN DE ACCIÓN"
+        "\n[KCD LAB-10B] PLAN DE ACCION AUTOMATICO"
     )
 
-    acciones = []
+    acciones_generadas = []
 
-    for problema in clasificacion["corregibles"]:
+    categorias = [
+        "software",
+        "configuracion",
+        "usuario",
+        "hardware"
+    ]
 
-        if problema == "Liberación de espacio en disco":
+    for categoria in categorias:
 
-            acciones.append(
-                "Ejecutar limpieza preventiva."
-            )
-
-        elif problema == "Optimización preventiva del sistema":
-
-            acciones.append(
-                "Aplicar optimización recomendada."
-            )
-
-    if clasificacion["no_corregibles"]:
-
-        acciones.append(
-            "Programar intervención técnica."
+        problemas = clasificacion.get(
+            categoria,
+            []
         )
 
-    if acciones:
+        for problema in problemas:
 
-        for numero, accion in enumerate(
-            acciones,
+            for accion in problema.get(
+                "acciones",
+                []
+            ):
+
+                accion_detalle = {
+                    "categoria": problema.get(
+                        "categoria",
+                        categoria.upper()
+                    ),
+                    "problema": problema.get(
+                        "problema",
+                        "Problema no especificado"
+                    ),
+                    "prioridad": problema.get(
+                        "prioridad",
+                        "BAJA"
+                    ),
+                    "accion": accion,
+                    "resultado": "PENDIENTE",
+                    "estado": "PENDIENTE",
+                    "impacto": problema.get(
+                        "impacto",
+                        {}
+                    ),
+                    "antes": problema.get(
+                        "antes",
+                        {}
+                    )
+                }
+
+                if accion_ya_registrada_kcd(
+                    accion_detalle["problema"],
+                    accion_detalle["accion"]
+                ):
+
+                    print(
+                        f"[KCD DUPLICADO] Accion omitida: {accion_detalle['accion']}"
+                    )
+
+                    continue
+
+                acciones_generadas.append(
+                    accion_detalle
+                )
+
+    if acciones_generadas:
+
+        for numero, item in enumerate(
+            acciones_generadas,
             start=1
         ):
 
             print(
-                f"{numero}. {accion}"
+                f"{numero}. [{item['prioridad']}] {item['accion']}"
             )
 
     else:
 
         print(
-            "No se requieren acciones."
+            "No se requieren acciones nuevas o ya fueron registradas."
         )
 
-    return acciones
+    return acciones_generadas
 
 
 def registrar_plan_accion_kcd(
@@ -2812,16 +3301,92 @@ def registrar_plan_accion_kcd(
 ):
 
     if not acciones:
-        return
 
-    for accion in acciones:
+        print(
+            "\n[KCD LAB-10C] No hay acciones nuevas para registrar."
+        )
+
+        return False
+
+    for item in acciones:
+
+        if isinstance(
+            item,
+            dict
+        ):
+
+            problema = item.get(
+                "problema",
+                "Problema no especificado"
+            )
+
+            accion = item.get(
+                "accion",
+                "Accion no especificada"
+            )
+
+            resultado = item.get(
+                "resultado",
+                "PENDIENTE"
+            )
+
+            estado = item.get(
+                "estado",
+                "PENDIENTE"
+            )
+
+            categoria = item.get(
+                "categoria",
+                "SIN_CATEGORIA"
+            )
+
+            prioridad = item.get(
+                "prioridad",
+                "BAJA"
+            )
+
+            impacto = item.get(
+                "impacto",
+                {}
+            )
+
+            antes = item.get(
+                "antes",
+                {}
+            )
+
+        else:
+
+            problema = "Plan de accion KCD"
+            accion = str(
+                item
+            )
+            resultado = "PENDIENTE"
+            estado = "PENDIENTE"
+            categoria = "GENERAL"
+            prioridad = "MEDIA"
+            impacto = {}
+            antes = {}
+
+        registrar_evidencia_remediacion_kcd(
+            problema,
+            accion,
+            resultado,
+            estado,
+            categoria,
+            prioridad,
+            impacto,
+            antes
+        )
 
         registrar_accion_kcd(
             "PLAN_ACCION",
-            "PENDIENTE",
-            accion
+            estado,
+            f"[{prioridad}] {categoria} | {problema} | {accion}"
         )
 
     print(
-        "\n[KCD LAB-10C] PLAN REGISTRADO"
+        "\n[KCD LAB-10C] PLAN DE REMEDIACION REGISTRADO EN EVIDENCIA"
     )
+
+    return True
