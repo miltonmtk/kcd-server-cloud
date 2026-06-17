@@ -1,0 +1,13 @@
+id_incidente,fecha_apertura,origen,categoria,prioridad,estado,descripcion,fecha_cierre,resultado,validacion,responsable,tiempo_resolucion_horas
+INC-KCD-000001,2026-06-17 05:01:03,BLOQUE_12_ALERTAS,MEMORIA,CRITICO,PENDIENTE,Alerta ALTO detectada en RAM: RAM elevada (84.1%).,,,,,
+INC-KCD-000002,2026-06-17 05:01:03,BLOQUE_12_ALERTAS,DISCO,CRITICO,PENDIENTE,Alerta ALTO detectada en DISCO: Disco elevado (87.4% usado).,,,,,
+INC-KCD-000003,2026-06-17 05:01:03,BLOQUE_12_ALERTAS,DISCO,CRITICO,PENDIENTE,Alerta CRITICO detectada en ESPACIO_LIBRE: Espacio libre critico (12.64%).,,,,,
+INC-KCD-000004,2026-06-17 05:01:03,BLOQUE_12_ALERTAS,GENERAL,CRITICO,PENDIENTE,Alerta CRITICO detectada en IVK: IVK bajo (45.0%).,,,,,
+INC-KCD-000005,2026-06-17 05:01:03,BLOQUE_12_ALERTAS,MEMORIA,CRITICO,PENDIENTE,Alerta ALTO detectada en RAM: RAM elevada (83.9%).,,,,,
+INC-KCD-000006,2026-06-17 05:01:03,BLOQUE_13_PREDICTIVO,MEMORIA,CRITICO,PENDIENTE,Prediccion de riesgo CRITICO: Saturacion progresiva de memoria RAM. | Disco acercandose a nivel critico. | Reincidencia de alertas criticas. | Incremento temporal de eventos anormales. | Rendimiento limitado por RAM fisica insuficiente. | Riesgo de bloqueo por almacenamiento insuficiente.,,,,,
+INC-KCD-000007,2026-06-17 05:01:03,BLOQUE_10_PREPARADO,MEMORIA,CRITICO,PENDIENTE,Accion preparada de prioridad ALTO: RAM elevada (84.1%). | Monitorear aplicaciones de alto consumo.,,,,,
+INC-KCD-000008,2026-06-17 05:01:03,BLOQUE_10_PREPARADO,MEMORIA,CRITICO,PENDIENTE,Accion preparada de prioridad ALTO: Disco elevado (87.4% usado). | Programar limpieza preventiva de almacenamiento.,,,,,
+INC-KCD-000009,2026-06-17 05:01:03,BLOQUE_10_PREPARADO,DISCO,CRITICO,PENDIENTE,Accion preparada de prioridad CRITICO: Espacio libre critico (12.64%). | Preparar accion de liberacion de espacio para Bloque 10.,,,,,
+INC-KCD-000010,2026-06-17 05:01:03,BLOQUE_10_PREPARADO,GENERAL,CRITICO,PENDIENTE,Accion preparada de prioridad CRITICO: IVK bajo (45.0%). | Preparar remediacion con Bloque 10 y validar con Bloque 11.,,,,,
+INC-KCD-000011,2026-06-17 05:01:03,BLOQUE_10_PREPARADO,MEMORIA,CRITICO,PENDIENTE,Accion preparada de prioridad ALTO: RAM elevada (83.9%). | Monitorear aplicaciones de alto consumo.,,,,,
+INC-KCD-000012,2026-06-17 05:01:03,BLOQUE_14_ORQUESTACION,MEMORIA,CRITICO,PENDIENTE,"Orquestacion KCD requiere atencion: IPK=100, accion=Evaluar ampliacion fisica de memoria RAM.",,,,,

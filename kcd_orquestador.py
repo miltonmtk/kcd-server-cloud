@@ -7963,3 +7963,1352 @@ def ejecutar_orquestacion_inteligente_kcd():
         "plan": plan,
         "resumen": resumen
     }
+
+
+# ==============================================================================
+# BLOQUE 15.0 - GESTION DE INCIDENTES Y CASOS KCD
+# ==============================================================================
+#
+# 15.1 Apertura automatica de incidentes
+# 15.2 Registro maestro de incidentes
+# 15.3 Clasificacion de incidentes
+# 15.4 Priorizacion
+# 15.5 Seguimiento de incidentes
+# 15.6 Cierre tecnico
+# 15.7 Tiempo de resolucion
+# 15.8 Evidencia de incidentes
+# 15.9 Integracion KCD
+# 15.10 Resumen ejecutivo de incidentes
+#
+# ==============================================================================
+
+def leer_csv_incidentes_kcd(
+    nombre_archivo
+):
+
+    if not os.path.exists(
+        nombre_archivo
+    ):
+
+        return []
+
+    registros = []
+
+    try:
+
+        with open(
+            nombre_archivo,
+            mode="r",
+            encoding="utf-8"
+        ) as archivo:
+
+            lector = csv.DictReader(
+                archivo
+            )
+
+            for fila in lector:
+
+                registros.append(
+                    fila
+                )
+
+    except Exception as error:
+
+        print(
+            f"\n[KCD INCIDENTES ERROR] No se pudo leer {nombre_archivo}: {error}"
+        )
+
+        return []
+
+    return registros
+
+
+def convertir_fecha_incidente_kcd(
+    fecha_texto
+):
+
+    try:
+
+        return datetime.strptime(
+            fecha_texto,
+            "%Y-%m-%d %H:%M:%S"
+        )
+
+    except Exception:
+
+        return None
+
+
+def generar_id_incidente_kcd():
+
+    registros = leer_csv_incidentes_kcd(
+        "incidentes_kcd.csv"
+    )
+
+    mayor = 0
+
+    for fila in registros:
+
+        id_incidente = fila.get(
+            "id_incidente",
+            ""
+        )
+
+        try:
+
+            numero = int(
+                id_incidente.replace(
+                    "INC-KCD-",
+                    ""
+                )
+            )
+
+            if numero > mayor:
+
+                mayor = numero
+
+        except Exception:
+
+            continue
+
+    nuevo = mayor + 1
+
+    return f"INC-KCD-{nuevo:06d}"
+
+
+def clasificar_categoria_incidente_kcd(
+    texto
+):
+
+    texto = str(
+        texto
+    ).lower()
+
+    if (
+        "ram" in texto
+        or "memoria" in texto
+    ):
+
+        return "MEMORIA"
+
+    if (
+        "disco" in texto
+        or "espacio" in texto
+        or "almacenamiento" in texto
+    ):
+
+        return "DISCO"
+
+    if "cpu" in texto:
+
+        return "CPU"
+
+    if "chrome" in texto:
+
+        return "CHROME"
+
+    if (
+        "red" in texto
+        or "network" in texto
+        or "internet" in texto
+    ):
+
+        return "RED"
+
+    if (
+        "servicio" in texto
+        or "servicios" in texto
+    ):
+
+        return "SERVICIOS"
+
+    if (
+        "hardware" in texto
+        or "fisica" in texto
+        or "ampliacion" in texto
+    ):
+
+        return "HARDWARE"
+
+    if (
+        "software" in texto
+        or "optimizacion" in texto
+        or "aplicacion" in texto
+    ):
+
+        return "SOFTWARE"
+
+    return "GENERAL"
+
+
+def convertir_numero_incidente_kcd(
+    valor,
+    defecto=0
+):
+
+    try:
+
+        return float(
+            valor
+        )
+
+    except Exception:
+
+        return defecto
+
+
+def clasificar_prioridad_incidente_kcd(
+    descripcion,
+    datos=None
+):
+
+    if datos is None:
+
+        datos = {}
+
+    texto = str(
+        descripcion
+    ).lower()
+
+    nivel = str(
+        datos.get(
+            "nivel",
+            ""
+        )
+    ).upper()
+
+    riesgo = str(
+        datos.get(
+            "riesgo_predictivo",
+            ""
+        )
+    ).upper()
+
+    certificacion = str(
+        datos.get(
+            "certificacion",
+            ""
+        )
+    ).upper()
+
+    resultado = str(
+        datos.get(
+            "resultado",
+            ""
+        )
+    ).upper()
+
+    ivk = convertir_numero_incidente_kcd(
+        datos.get(
+            "ivk",
+            100
+        ),
+        100
+    )
+
+    ram_total = convertir_numero_incidente_kcd(
+        datos.get(
+            "ram_total_gb",
+            0
+        )
+    )
+
+    espacio_libre = convertir_numero_incidente_kcd(
+        datos.get(
+            "espacio_libre_pct",
+            datos.get(
+                "despues_espacio_libre",
+                datos.get(
+                    "antes_espacio_libre",
+                    100
+                )
+            )
+        ),
+        100
+    )
+
+    chrome_ram = convertir_numero_incidente_kcd(
+        datos.get(
+            "chrome_ram_mb",
+            0
+        )
+    )
+
+    if (
+        nivel == "CRITICO"
+        or riesgo == "CRITICO"
+        or certificacion == "REQUIERE HARDWARE"
+        or resultado == "EMPEORO"
+        or "critico" in texto
+        or "crítico" in texto
+        or ivk <= 45
+        or (
+            ram_total > 0
+            and ram_total < 4
+        )
+        or espacio_libre < 15
+    ):
+
+        return "CRITICO"
+
+    if (
+        nivel == "ALTO"
+        or riesgo == "ALTO"
+        or resultado == "SIN CAMBIO"
+        or certificacion == "NO EFECTIVO"
+        or chrome_ram >= 1000
+        or "alto" in texto
+        or "no efectivo" in texto
+    ):
+
+        return "ALTO"
+
+    if (
+        nivel == "MODERADO"
+        or riesgo == "MODERADO"
+        or "moderado" in texto
+        or "parcial" in texto
+    ):
+
+        return "MODERADO"
+
+    return "BAJO"
+
+
+def incidente_duplicado_kcd(
+    origen,
+    descripcion
+):
+
+    registros = leer_csv_incidentes_kcd(
+        "incidentes_kcd.csv"
+    )
+
+    for fila in registros:
+
+        if (
+            fila.get(
+                "origen",
+                ""
+            ) == origen
+            and fila.get(
+                "descripcion",
+                ""
+            ) == descripcion
+            and fila.get(
+                "estado",
+                ""
+            ) != "CERRADO"
+        ):
+
+            return True
+
+    return False
+
+
+def escribir_incidente_maestro_kcd(
+    incidente
+):
+
+    nombre_archivo = "incidentes_kcd.csv"
+
+    existe_archivo = os.path.exists(
+        nombre_archivo
+    )
+
+    encabezados = [
+        "id_incidente",
+        "fecha_apertura",
+        "origen",
+        "categoria",
+        "prioridad",
+        "estado",
+        "descripcion",
+        "fecha_cierre",
+        "resultado",
+        "validacion",
+        "responsable",
+        "tiempo_resolucion_horas"
+    ]
+
+    with open(
+        nombre_archivo,
+        mode="a",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.DictWriter(
+            archivo,
+            fieldnames=encabezados
+        )
+
+        if not existe_archivo:
+
+            escritor.writeheader()
+
+        escritor.writerow({
+            "id_incidente": incidente.get(
+                "id_incidente",
+                ""
+            ),
+            "fecha_apertura": incidente.get(
+                "fecha_apertura",
+                ""
+            ),
+            "origen": incidente.get(
+                "origen",
+                ""
+            ),
+            "categoria": incidente.get(
+                "categoria",
+                "GENERAL"
+            ),
+            "prioridad": incidente.get(
+                "prioridad",
+                "BAJO"
+            ),
+            "estado": incidente.get(
+                "estado",
+                "PENDIENTE"
+            ),
+            "descripcion": incidente.get(
+                "descripcion",
+                ""
+            ),
+            "fecha_cierre": "",
+            "resultado": "",
+            "validacion": "",
+            "responsable": "",
+            "tiempo_resolucion_horas": ""
+        })
+
+
+def registrar_seguimiento_incidente_kcd(
+    id_incidente,
+    estado,
+    observacion
+):
+
+    estados_validos = [
+        "EN_ANALISIS",
+        "EN_PROCESO",
+        "PENDIENTE",
+        "VALIDANDO",
+        "CERRADO"
+    ]
+
+    if estado not in estados_validos:
+
+        estado = "PENDIENTE"
+
+    nombre_archivo = "seguimiento_incidentes_kcd.csv"
+
+    existe_archivo = os.path.exists(
+        nombre_archivo
+    )
+
+    encabezados = [
+        "fecha",
+        "id_incidente",
+        "estado",
+        "observacion"
+    ]
+
+    fila = [
+        datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        id_incidente,
+        estado,
+        observacion
+    ]
+
+    with open(
+        nombre_archivo,
+        mode="a",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.writer(
+            archivo
+        )
+
+        if not existe_archivo:
+
+            escritor.writerow(
+                encabezados
+            )
+
+        escritor.writerow(
+            fila
+        )
+
+
+def abrir_incidente_kcd(
+    origen,
+    descripcion,
+    datos=None
+):
+
+    if datos is None:
+
+        datos = {}
+
+    if incidente_duplicado_kcd(
+        origen,
+        descripcion
+    ):
+
+        print(
+            f"[KCD INCIDENTES] Incidente duplicado omitido: {descripcion}"
+        )
+
+        return None
+
+    categoria = clasificar_categoria_incidente_kcd(
+        descripcion
+    )
+
+    prioridad = clasificar_prioridad_incidente_kcd(
+        descripcion,
+        datos
+    )
+
+    incidente = {
+        "id_incidente": generar_id_incidente_kcd(),
+        "fecha_apertura": datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        "origen": origen,
+        "categoria": categoria,
+        "prioridad": prioridad,
+        "estado": "PENDIENTE",
+        "descripcion": descripcion
+    }
+
+    escribir_incidente_maestro_kcd(
+        incidente
+    )
+
+    registrar_seguimiento_incidente_kcd(
+        incidente["id_incidente"],
+        "PENDIENTE",
+        "Incidente abierto por KCD."
+    )
+
+    try:
+
+        registrar_accion_kcd(
+            "INCIDENTE_ABIERTO",
+            prioridad,
+            f"{incidente['id_incidente']} | {descripcion}"
+        )
+
+    except Exception:
+
+        pass
+
+    print(
+        f"[KCD INCIDENTES] Abierto {incidente['id_incidente']} - {prioridad}"
+    )
+
+    return incidente
+
+
+def abrir_incidentes_desde_alertas_kcd():
+
+    alertas = leer_csv_incidentes_kcd(
+        "alertas_kcd.csv"
+    )
+
+    creados = []
+
+    for alerta in alertas:
+
+        nivel = alerta.get(
+            "nivel",
+            ""
+        )
+
+        tipo = alerta.get(
+            "tipo",
+            "GENERAL"
+        )
+
+        mensaje = alerta.get(
+            "mensaje",
+            ""
+        )
+
+        if nivel not in [
+            "CRITICO",
+            "ALTO"
+        ]:
+
+            continue
+
+        descripcion = (
+            f"Alerta {nivel} detectada en {tipo}: {mensaje}"
+        )
+
+        incidente = abrir_incidente_kcd(
+            "BLOQUE_12_ALERTAS",
+            descripcion,
+            alerta
+        )
+
+        if incidente:
+
+            creados.append(
+                incidente
+            )
+
+    return creados
+
+
+def abrir_incidentes_desde_predicciones_kcd():
+
+    predicciones = leer_csv_incidentes_kcd(
+        "prediccion_riesgo_kcd.csv"
+    )
+
+    creados = []
+
+    for prediccion in predicciones:
+
+        riesgo = prediccion.get(
+            "riesgo_predictivo",
+            ""
+        )
+
+        if riesgo not in [
+            "CRITICO",
+            "ALTO"
+        ]:
+
+            continue
+
+        descripcion = (
+            f"Prediccion de riesgo {riesgo}: {prediccion.get('que_puede_fallar', '')}"
+        )
+
+        incidente = abrir_incidente_kcd(
+            "BLOQUE_13_PREDICTIVO",
+            descripcion,
+            prediccion
+        )
+
+        if incidente:
+
+            creados.append(
+                incidente
+            )
+
+    return creados
+
+
+def abrir_incidentes_desde_validaciones_kcd():
+
+    validaciones = leer_csv_incidentes_kcd(
+        "validacion_resultados_kcd.csv"
+    )
+
+    creados = []
+
+    for validacion in validaciones:
+
+        resultado = validacion.get(
+            "resultado",
+            ""
+        )
+
+        certificacion = validacion.get(
+            "certificacion",
+            ""
+        )
+
+        if (
+            resultado not in [
+                "SIN CAMBIO",
+                "EMPEORO"
+            ]
+            and certificacion not in [
+                "NO EFECTIVO",
+                "REQUIERE HARDWARE"
+            ]
+        ):
+
+            continue
+
+        descripcion = (
+            f"Validacion no favorable: resultado={resultado}, certificacion={certificacion}."
+        )
+
+        incidente = abrir_incidente_kcd(
+            "BLOQUE_11_VALIDACION",
+            descripcion,
+            validacion
+        )
+
+        if incidente:
+
+            creados.append(
+                incidente
+            )
+
+    return creados
+
+
+def abrir_incidentes_desde_acciones_preparadas_kcd():
+
+    acciones = leer_csv_incidentes_kcd(
+        "acciones_preparadas_bloque10_kcd.csv"
+    )
+
+    creados = []
+
+    for accion in acciones:
+
+        nivel = accion.get(
+            "nivel",
+            ""
+        )
+
+        problema = accion.get(
+            "problema",
+            ""
+        )
+
+        accion_sugerida = accion.get(
+            "accion_sugerida",
+            ""
+        )
+
+        if nivel not in [
+            "CRITICO",
+            "ALTO"
+        ]:
+
+            continue
+
+        descripcion = (
+            f"Accion preparada de prioridad {nivel}: {problema} | {accion_sugerida}"
+        )
+
+        incidente = abrir_incidente_kcd(
+            "BLOQUE_10_PREPARADO",
+            descripcion,
+            accion
+        )
+
+        if incidente:
+
+            creados.append(
+                incidente
+            )
+
+    return creados
+
+
+def abrir_incidentes_desde_orquestacion_kcd():
+
+    orquestaciones = leer_csv_incidentes_kcd(
+        "orquestacion_kcd.csv"
+    )
+
+    creados = []
+
+    for item in orquestaciones:
+
+        riesgo_actual = item.get(
+            "riesgo_actual",
+            ""
+        )
+
+        riesgo_futuro = item.get(
+            "riesgo_futuro",
+            ""
+        )
+
+        prioridad = item.get(
+            "nivel_prioridad",
+            ""
+        )
+
+        if (
+            riesgo_actual not in [
+                "CRITICO",
+                "ALTO"
+            ]
+            and riesgo_futuro not in [
+                "CRITICO",
+                "ALTO"
+            ]
+            and prioridad not in [
+                "CRITICO",
+                "ALTO"
+            ]
+        ):
+
+            continue
+
+        descripcion = (
+            f"Orquestacion KCD requiere atencion: IPK={item.get('IPK', '')}, accion={item.get('accion_principal', '')}"
+        )
+
+        datos = {
+            "nivel": prioridad,
+            "riesgo_predictivo": riesgo_futuro
+        }
+
+        incidente = abrir_incidente_kcd(
+            "BLOQUE_14_ORQUESTACION",
+            descripcion,
+            datos
+        )
+
+        if incidente:
+
+            creados.append(
+                incidente
+            )
+
+    return creados
+
+
+def actualizar_estado_incidente_kcd(
+    id_incidente,
+    estado,
+    observacion="Actualizacion de estado."
+):
+
+    registros = leer_csv_incidentes_kcd(
+        "incidentes_kcd.csv"
+    )
+
+    if not registros:
+
+        print(
+            "\n[KCD INCIDENTES] No existen incidentes para actualizar."
+        )
+
+        return False
+
+    encontrado = False
+
+    for fila in registros:
+
+        if fila.get(
+            "id_incidente",
+            ""
+        ) == id_incidente:
+
+            fila["estado"] = estado
+
+            encontrado = True
+
+            break
+
+    if not encontrado:
+
+        print(
+            f"\n[KCD INCIDENTES] No se encontro el incidente {id_incidente}."
+        )
+
+        return False
+
+    guardar_incidentes_actualizados_kcd(
+        registros
+    )
+
+    registrar_seguimiento_incidente_kcd(
+        id_incidente,
+        estado,
+        observacion
+    )
+
+    print(
+        f"\n[KCD INCIDENTES] {id_incidente} actualizado a {estado}."
+    )
+
+    return True
+
+
+def guardar_incidentes_actualizados_kcd(
+    registros
+):
+
+    nombre_archivo = "incidentes_kcd.csv"
+
+    encabezados = [
+        "id_incidente",
+        "fecha_apertura",
+        "origen",
+        "categoria",
+        "prioridad",
+        "estado",
+        "descripcion",
+        "fecha_cierre",
+        "resultado",
+        "validacion",
+        "responsable",
+        "tiempo_resolucion_horas"
+    ]
+
+    with open(
+        nombre_archivo,
+        mode="w",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.DictWriter(
+            archivo,
+            fieldnames=encabezados
+        )
+
+        escritor.writeheader()
+
+        for fila in registros:
+
+            escritor.writerow({
+                "id_incidente": fila.get(
+                    "id_incidente",
+                    ""
+                ),
+                "fecha_apertura": fila.get(
+                    "fecha_apertura",
+                    ""
+                ),
+                "origen": fila.get(
+                    "origen",
+                    ""
+                ),
+                "categoria": fila.get(
+                    "categoria",
+                    "GENERAL"
+                ),
+                "prioridad": fila.get(
+                    "prioridad",
+                    "BAJO"
+                ),
+                "estado": fila.get(
+                    "estado",
+                    "PENDIENTE"
+                ),
+                "descripcion": fila.get(
+                    "descripcion",
+                    ""
+                ),
+                "fecha_cierre": fila.get(
+                    "fecha_cierre",
+                    ""
+                ),
+                "resultado": fila.get(
+                    "resultado",
+                    ""
+                ),
+                "validacion": fila.get(
+                    "validacion",
+                    ""
+                ),
+                "responsable": fila.get(
+                    "responsable",
+                    ""
+                ),
+                "tiempo_resolucion_horas": fila.get(
+                    "tiempo_resolucion_horas",
+                    ""
+                )
+            })
+
+
+def cerrar_incidente_kcd(
+    id_incidente,
+    resultado,
+    validacion,
+    responsable="KCD"
+):
+
+    resultados_validos = [
+        "RESUELTO",
+        "PARCIAL",
+        "NO_RESUELTO"
+    ]
+
+    if resultado not in resultados_validos:
+
+        resultado = "NO_RESUELTO"
+
+    registros = leer_csv_incidentes_kcd(
+        "incidentes_kcd.csv"
+    )
+
+    if not registros:
+
+        print(
+            "\n[KCD INCIDENTES] No existen incidentes para cerrar."
+        )
+
+        return False
+
+    encontrado = False
+
+    fecha_cierre = datetime.now()
+
+    for fila in registros:
+
+        if fila.get(
+            "id_incidente",
+            ""
+        ) == id_incidente:
+
+            fecha_apertura = convertir_fecha_incidente_kcd(
+                fila.get(
+                    "fecha_apertura",
+                    ""
+                )
+            )
+
+            if fecha_apertura:
+
+                tiempo_horas = round(
+                    (fecha_cierre - fecha_apertura).total_seconds() / 3600,
+                    2
+                )
+
+            else:
+
+                tiempo_horas = ""
+
+            fila["estado"] = "CERRADO"
+            fila["fecha_cierre"] = fecha_cierre.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
+            fila["resultado"] = resultado
+            fila["validacion"] = validacion
+            fila["responsable"] = responsable
+            fila["tiempo_resolucion_horas"] = tiempo_horas
+
+            encontrado = True
+
+            break
+
+    if not encontrado:
+
+        print(
+            f"\n[KCD INCIDENTES] No se encontro el incidente {id_incidente}."
+        )
+
+        return False
+
+    guardar_incidentes_actualizados_kcd(
+        registros
+    )
+
+    registrar_seguimiento_incidente_kcd(
+        id_incidente,
+        "CERRADO",
+        f"Cierre tecnico: {resultado} | Validacion: {validacion} | Responsable: {responsable}"
+    )
+
+    try:
+
+        registrar_accion_kcd(
+            "INCIDENTE_CERRADO",
+            resultado,
+            id_incidente
+        )
+
+    except Exception:
+
+        pass
+
+    print(
+        f"\n[KCD INCIDENTES] Incidente cerrado: {id_incidente}"
+    )
+
+    return True
+
+
+def calcular_metricas_incidentes_kcd():
+
+    registros = leer_csv_incidentes_kcd(
+        "incidentes_kcd.csv"
+    )
+
+    abiertos = 0
+    cerrados = 0
+    tiempos = []
+
+    prioridad_maxima = "BAJO"
+    incidente_principal = ""
+    estado_principal = ""
+
+    orden_prioridad = {
+        "CRITICO": 4,
+        "ALTO": 3,
+        "MODERADO": 2,
+        "BAJO": 1
+    }
+
+    mayor_prioridad = 0
+
+    for fila in registros:
+
+        estado = fila.get(
+            "estado",
+            "PENDIENTE"
+        )
+
+        prioridad = fila.get(
+            "prioridad",
+            "BAJO"
+        )
+
+        if estado == "CERRADO":
+
+            cerrados += 1
+
+            tiempo = convertir_numero_incidente_kcd(
+                fila.get(
+                    "tiempo_resolucion_horas",
+                    0
+                )
+            )
+
+            if tiempo > 0:
+
+                tiempos.append(
+                    tiempo
+                )
+
+        else:
+
+            abiertos += 1
+
+        valor_prioridad = orden_prioridad.get(
+            prioridad,
+            1
+        )
+
+        if (
+            estado != "CERRADO"
+            and valor_prioridad > mayor_prioridad
+        ):
+
+            mayor_prioridad = valor_prioridad
+            prioridad_maxima = prioridad
+            incidente_principal = fila.get(
+                "id_incidente",
+                ""
+            )
+            estado_principal = estado
+
+    if tiempos:
+
+        promedio = round(
+            sum(
+                tiempos
+            ) / len(
+                tiempos
+            ),
+            2
+        )
+
+        maximo = max(
+            tiempos
+        )
+
+        minimo = min(
+            tiempos
+        )
+
+    else:
+
+        promedio = 0
+        maximo = 0
+        minimo = 0
+
+    metricas = {
+        "incidentes_abiertos": abiertos,
+        "incidentes_cerrados": cerrados,
+        "promedio_resolucion": promedio,
+        "maximo_resolucion": maximo,
+        "minimo_resolucion": minimo,
+        "prioridad_maxima": prioridad_maxima,
+        "incidente_principal": incidente_principal,
+        "estado_principal": estado_principal
+    }
+
+    return metricas
+
+
+def registrar_estadisticas_incidentes_kcd(
+    metricas
+):
+
+    nombre_archivo = "estadisticas_incidentes_kcd.csv"
+
+    existe_archivo = os.path.exists(
+        nombre_archivo
+    )
+
+    encabezados = [
+        "fecha",
+        "incidentes_abiertos",
+        "incidentes_cerrados",
+        "promedio_resolucion",
+        "maximo_resolucion",
+        "minimo_resolucion",
+        "prioridad_maxima",
+        "incidente_principal"
+    ]
+
+    fila = [
+        datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        metricas.get(
+            "incidentes_abiertos",
+            0
+        ),
+        metricas.get(
+            "incidentes_cerrados",
+            0
+        ),
+        metricas.get(
+            "promedio_resolucion",
+            0
+        ),
+        metricas.get(
+            "maximo_resolucion",
+            0
+        ),
+        metricas.get(
+            "minimo_resolucion",
+            0
+        ),
+        metricas.get(
+            "prioridad_maxima",
+            "BAJO"
+        ),
+        metricas.get(
+            "incidente_principal",
+            ""
+        )
+    ]
+
+    with open(
+        nombre_archivo,
+        mode="a",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.writer(
+            archivo
+        )
+
+        if not existe_archivo:
+
+            escritor.writerow(
+                encabezados
+            )
+
+        escritor.writerow(
+            fila
+        )
+
+    print(
+        "\n[KCD INCIDENTES] Estadisticas registradas."
+    )
+
+
+def resumen_ejecutivo_incidentes_kcd(
+    metricas
+):
+
+    print(
+        "\n[KCD INCIDENTES]"
+    )
+
+    print(
+        f"Incidentes abiertos: {metricas.get('incidentes_abiertos', 0)}"
+    )
+
+    print(
+        f"Incidentes cerrados: {metricas.get('incidentes_cerrados', 0)}"
+    )
+
+    print(
+        f"Prioridad maxima: {metricas.get('prioridad_maxima', 'BAJO')}"
+    )
+
+    print(
+        f"Incidente principal: {metricas.get('incidente_principal', '')}"
+    )
+
+    print(
+        f"Estado: {metricas.get('estado_principal', '')}"
+    )
+
+    print(
+        f"Tiempo promedio de resolucion: {metricas.get('promedio_resolucion', 0)} horas"
+    )
+
+    return metricas
+
+
+def ejecutar_gestion_incidentes_kcd():
+
+    print(
+        "\n[KCD BLOQUE 15] GESTION DE INCIDENTES Y CASOS KCD"
+    )
+
+    print(
+        "Modo seguro: no cierra incidentes automaticamente, no remedia y no modifica Windows."
+    )
+
+    creados = []
+
+    creados.extend(
+        abrir_incidentes_desde_alertas_kcd()
+    )
+
+    creados.extend(
+        abrir_incidentes_desde_predicciones_kcd()
+    )
+
+    creados.extend(
+        abrir_incidentes_desde_validaciones_kcd()
+    )
+
+    creados.extend(
+        abrir_incidentes_desde_acciones_preparadas_kcd()
+    )
+
+    creados.extend(
+        abrir_incidentes_desde_orquestacion_kcd()
+    )
+
+    metricas = calcular_metricas_incidentes_kcd()
+
+    registrar_estadisticas_incidentes_kcd(
+        metricas
+    )
+
+    resumen_ejecutivo_incidentes_kcd(
+        metricas
+    )
+
+    print(
+        f"\n[KCD INCIDENTES] Nuevos incidentes abiertos: {len(creados)}"
+    )
+
+    return {
+        "nuevos_incidentes": creados,
+        "metricas": metricas
+    }

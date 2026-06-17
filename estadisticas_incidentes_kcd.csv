@@ -1,0 +1,3 @@
+fecha,incidentes_abiertos,incidentes_cerrados,promedio_resolucion,maximo_resolucion,minimo_resolucion,prioridad_maxima,incidente_principal
+2026-06-17 05:01:03,12,0,0,0,0,CRITICO,INC-KCD-000001
+2026-06-17 05:01:38,12,0,0,0,0,CRITICO,INC-KCD-000001
