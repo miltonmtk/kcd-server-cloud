@@ -1,0 +1,8 @@
+fecha,indicador,valor,estado,detalle
+2026-06-17 05:28:13,Indice de Madurez KCD,31.43,BASICO,Indice global 0-100
+2026-06-17 05:28:13,Estado Global,CRITICO,CRITICO,Estado consolidado del sistema
+2026-06-17 05:28:13,Salud Operativa,8.0,CRITICO,"IVK, CPU, RAM y disco"
+2026-06-17 05:28:13,Efectividad Remediaciones,50,SIN_DATOS,Resultados del Bloque 11
+2026-06-17 05:28:13,Nivel de Incidentes,0,CRITICO,Incidentes abiertos y cerrados
+2026-06-17 05:28:13,Riesgo Acumulado,89.0,CRITICO,"Alertas, prediccion e IPK"
+2026-06-17 05:28:13,Trazabilidad Documental,88.89,AUDITABLE,Fuentes CSV disponibles

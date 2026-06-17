@@ -9312,3 +9312,1206 @@ def ejecutar_gestion_incidentes_kcd():
         "nuevos_incidentes": creados,
         "metricas": metricas
     }
+
+# ==============================================================================
+# BLOQUE 16.0 - CENTRO DE CONTROL Y MADUREZ KCD
+# ==============================================================================
+#
+# 16.1 Consolidacion global de evidencias
+# 16.2 Indice de Madurez KCD
+# 16.3 Estado global del sistema
+# 16.4 Efectividad de remediaciones
+# 16.5 Nivel de incidentes
+# 16.6 Riesgo acumulado
+# 16.7 Salud operativa
+# 16.8 Trazabilidad documental
+# 16.9 Dashboard CSV
+#
+# ==============================================================================
+
+def leer_csv_madurez_kcd(
+    nombre_archivo
+):
+
+    if not os.path.exists(
+        nombre_archivo
+    ):
+
+        return []
+
+    registros = []
+
+    try:
+
+        with open(
+            nombre_archivo,
+            mode="r",
+            encoding="utf-8"
+        ) as archivo:
+
+            lector = csv.DictReader(
+                archivo
+            )
+
+            for fila in lector:
+
+                registros.append(
+                    fila
+                )
+
+    except Exception as error:
+
+        print(
+            f"\n[KCD MADUREZ ERROR] No se pudo leer {nombre_archivo}: {error}"
+        )
+
+        return []
+
+    return registros
+
+
+def convertir_numero_madurez_kcd(
+    valor,
+    defecto=0
+):
+
+    try:
+
+        return float(
+            valor
+        )
+
+    except Exception:
+
+        return defecto
+
+
+def limitar_indice_kcd(
+    valor
+):
+
+    if valor < 0:
+
+        return 0
+
+    if valor > 100:
+
+        return 100
+
+    return round(
+        valor,
+        2
+    )
+
+
+def ultimo_registro_madurez_kcd(
+    registros
+):
+
+    if not registros:
+
+        return {}
+
+    return registros[
+        -1
+    ]
+
+
+def consolidar_evidencias_madurez_kcd():
+
+    print(
+        "\n[KCD MADUREZ] Consolidando evidencias globales..."
+    )
+
+    archivos = {
+        "bitacora": "bitacora_kcd.csv",
+        "acciones": "acciones_kcd.csv",
+        "alertas": "alertas_kcd.csv",
+        "prediccion": "prediccion_riesgo_kcd.csv",
+        "orquestacion": "orquestacion_kcd.csv",
+        "incidentes": "incidentes_kcd.csv",
+        "seguimiento_incidentes": "seguimiento_incidentes_kcd.csv",
+        "estadisticas_incidentes": "estadisticas_incidentes_kcd.csv",
+        "validaciones": "validacion_resultados_kcd.csv"
+    }
+
+    evidencias = {}
+
+    for clave, archivo in archivos.items():
+
+        registros = leer_csv_madurez_kcd(
+            archivo
+        )
+
+        evidencias[clave] = registros
+
+        print(
+            f"{archivo}: {len(registros)} registros"
+        )
+
+    return evidencias
+
+
+def calcular_trazabilidad_documental_kcd(
+    evidencias
+):
+
+    total_fuentes = len(
+        evidencias
+    )
+
+    fuentes_con_datos = 0
+
+    for registros in evidencias.values():
+
+        if registros:
+
+            fuentes_con_datos += 1
+
+    if total_fuentes == 0:
+
+        return 0
+
+    indice = (
+        fuentes_con_datos / total_fuentes
+    ) * 100
+
+    return limitar_indice_kcd(
+        indice
+    )
+
+
+def calcular_salud_operativa_kcd(
+    evidencias
+):
+
+    bitacora = evidencias.get(
+        "bitacora",
+        []
+    )
+
+    if not bitacora:
+
+        return {
+            "indice": 50,
+            "estado": "SIN_DATOS",
+            "ivk": 0,
+            "cpu": 0,
+            "ram": 0,
+            "disco": 0
+        }
+
+    ultimo = ultimo_registro_madurez_kcd(
+        bitacora
+    )
+
+    ivk = convertir_numero_madurez_kcd(
+        ultimo.get(
+            "ivk",
+            50
+        ),
+        50
+    )
+
+    cpu = convertir_numero_madurez_kcd(
+        ultimo.get(
+            "cpu",
+            0
+        )
+    )
+
+    ram = convertir_numero_madurez_kcd(
+        ultimo.get(
+            "ram",
+            0
+        )
+    )
+
+    disco = convertir_numero_madurez_kcd(
+        ultimo.get(
+            "disco",
+            0
+        )
+    )
+
+    penalizacion = 0
+
+    if cpu >= 90:
+
+        penalizacion += 20
+
+    elif cpu >= 75:
+
+        penalizacion += 10
+
+    if ram >= 90:
+
+        penalizacion += 25
+
+    elif ram >= 75:
+
+        penalizacion += 12
+
+    if disco >= 90:
+
+        penalizacion += 25
+
+    elif disco >= 80:
+
+        penalizacion += 12
+
+    indice = limitar_indice_kcd(
+        ivk - penalizacion
+    )
+
+    if indice >= 76:
+
+        estado = "SALUDABLE"
+
+    elif indice >= 51:
+
+        estado = "ACEPTABLE"
+
+    elif indice >= 26:
+
+        estado = "EN_RIESGO"
+
+    else:
+
+        estado = "CRITICO"
+
+    return {
+        "indice": indice,
+        "estado": estado,
+        "ivk": ivk,
+        "cpu": cpu,
+        "ram": ram,
+        "disco": disco
+    }
+
+
+def calcular_efectividad_remediaciones_kcd(
+    evidencias
+):
+
+    validaciones = evidencias.get(
+        "validaciones",
+        []
+    )
+
+    if not validaciones:
+
+        return {
+            "indice": 50,
+            "estado": "SIN_DATOS",
+            "efectivas": 0,
+            "parciales": 0,
+            "no_efectivas": 0,
+            "requieren_hardware": 0
+        }
+
+    efectivas = 0
+    parciales = 0
+    no_efectivas = 0
+    requieren_hardware = 0
+
+    puntaje = 0
+
+    for fila in validaciones:
+
+        certificacion = fila.get(
+            "certificacion",
+            ""
+        )
+
+        resultado = fila.get(
+            "resultado",
+            ""
+        )
+
+        if certificacion == "EFECTIVO":
+
+            efectivas += 1
+            puntaje += 100
+
+        elif certificacion == "PARCIALMENTE EFECTIVO":
+
+            parciales += 1
+            puntaje += 65
+
+        elif certificacion == "REQUIERE HARDWARE":
+
+            requieren_hardware += 1
+            puntaje += 45
+
+        elif (
+            certificacion == "NO EFECTIVO"
+            or resultado == "SIN CAMBIO"
+            or resultado == "EMPEORO"
+        ):
+
+            no_efectivas += 1
+            puntaje += 20
+
+        else:
+
+            puntaje += 50
+
+    indice = limitar_indice_kcd(
+        puntaje / len(
+            validaciones
+        )
+    )
+
+    if indice >= 76:
+
+        estado = "EFECTIVA"
+
+    elif indice >= 51:
+
+        estado = "PARCIAL"
+
+    elif indice >= 26:
+
+        estado = "BAJA"
+
+    else:
+
+        estado = "NO_EFECTIVA"
+
+    return {
+        "indice": indice,
+        "estado": estado,
+        "efectivas": efectivas,
+        "parciales": parciales,
+        "no_efectivas": no_efectivas,
+        "requieren_hardware": requieren_hardware
+    }
+
+
+def calcular_nivel_incidentes_kcd(
+    evidencias
+):
+
+    incidentes = evidencias.get(
+        "incidentes",
+        []
+    )
+
+    if not incidentes:
+
+        return {
+            "indice": 100,
+            "estado": "SIN_INCIDENTES",
+            "abiertos": 0,
+            "cerrados": 0,
+            "criticos_abiertos": 0
+        }
+
+    abiertos = 0
+    cerrados = 0
+    criticos_abiertos = 0
+    altos_abiertos = 0
+
+    for fila in incidentes:
+
+        estado = fila.get(
+            "estado",
+            "PENDIENTE"
+        )
+
+        prioridad = fila.get(
+            "prioridad",
+            "BAJO"
+        )
+
+        if estado == "CERRADO":
+
+            cerrados += 1
+
+        else:
+
+            abiertos += 1
+
+            if prioridad == "CRITICO":
+
+                criticos_abiertos += 1
+
+            elif prioridad == "ALTO":
+
+                altos_abiertos += 1
+
+    penalizacion = (
+        criticos_abiertos * 30
+        + altos_abiertos * 18
+        + abiertos * 5
+    )
+
+    indice = limitar_indice_kcd(
+        100 - penalizacion
+    )
+
+    if criticos_abiertos > 0:
+
+        estado = "CRITICO"
+
+    elif altos_abiertos > 0:
+
+        estado = "ALTO"
+
+    elif abiertos > 0:
+
+        estado = "CONTROLADO"
+
+    else:
+
+        estado = "CERRADO"
+
+    return {
+        "indice": indice,
+        "estado": estado,
+        "abiertos": abiertos,
+        "cerrados": cerrados,
+        "criticos_abiertos": criticos_abiertos
+    }
+
+
+def calcular_riesgo_acumulado_kcd(
+    evidencias
+):
+
+    alertas = evidencias.get(
+        "alertas",
+        []
+    )
+
+    predicciones = evidencias.get(
+        "prediccion",
+        []
+    )
+
+    orquestaciones = evidencias.get(
+        "orquestacion",
+        []
+    )
+
+    puntaje_riesgo = 0
+
+    for alerta in alertas:
+
+        nivel = alerta.get(
+            "nivel",
+            "BAJO"
+        )
+
+        if nivel == "CRITICO":
+
+            puntaje_riesgo += 6
+
+        elif nivel == "ALTO":
+
+            puntaje_riesgo += 4
+
+        elif nivel == "MODERADO":
+
+            puntaje_riesgo += 2
+
+        else:
+
+            puntaje_riesgo += 1
+
+    ultima_prediccion = ultimo_registro_madurez_kcd(
+        predicciones
+    )
+
+    riesgo_predictivo = ultima_prediccion.get(
+        "riesgo_predictivo",
+        "BAJO"
+    )
+
+    if riesgo_predictivo == "CRITICO":
+
+        puntaje_riesgo += 25
+
+    elif riesgo_predictivo == "ALTO":
+
+        puntaje_riesgo += 18
+
+    elif riesgo_predictivo == "MODERADO":
+
+        puntaje_riesgo += 10
+
+    ultima_orquestacion = ultimo_registro_madurez_kcd(
+        orquestaciones
+    )
+
+    ipk = convertir_numero_madurez_kcd(
+        ultima_orquestacion.get(
+            "IPK",
+            0
+        )
+    )
+
+    puntaje_riesgo += ipk * 0.4
+
+    if puntaje_riesgo >= 80:
+
+        estado = "CRITICO"
+
+    elif puntaje_riesgo >= 50:
+
+        estado = "ALTO"
+
+    elif puntaje_riesgo >= 25:
+
+        estado = "MODERADO"
+
+    else:
+
+        estado = "BAJO"
+
+    indice_salud_riesgo = limitar_indice_kcd(
+        100 - puntaje_riesgo
+    )
+
+    return {
+        "indice": indice_salud_riesgo,
+        "estado": estado,
+        "puntaje_riesgo": round(
+            puntaje_riesgo,
+            2
+        ),
+        "riesgo_predictivo": riesgo_predictivo,
+        "ipk": ipk
+    }
+
+
+def calcular_actividad_mantenimiento_kcd(
+    evidencias
+):
+
+    acciones = evidencias.get(
+        "acciones",
+        []
+    )
+
+    alertas = evidencias.get(
+        "alertas",
+        []
+    )
+
+    validaciones = evidencias.get(
+        "validaciones",
+        []
+    )
+
+    preventivas = 0
+    correctivas = 0
+    auditorias = 0
+
+    for fila in acciones:
+
+        accion = str(
+            fila.get(
+                "accion",
+                ""
+            )
+        ).lower()
+
+        detalle = str(
+            fila.get(
+                "detalle",
+                ""
+            )
+        ).lower()
+
+        texto = accion + " " + detalle
+
+        if (
+            "prevent" in texto
+            or "monitoreo" in texto
+            or "auditoria" in texto
+        ):
+
+            preventivas += 1
+
+        if (
+            "correc" in texto
+            or "remediacion" in texto
+            or "validacion" in texto
+            or "incidente" in texto
+        ):
+
+            correctivas += 1
+
+        if "auditoria" in texto:
+
+            auditorias += 1
+
+    total_actividad = (
+        len(
+            acciones
+        )
+        + len(
+            alertas
+        )
+        + len(
+            validaciones
+        )
+    )
+
+    return {
+        "acciones_registradas": len(
+            acciones
+        ),
+        "alertas_registradas": len(
+            alertas
+        ),
+        "validaciones_registradas": len(
+            validaciones
+        ),
+        "preventivas": preventivas,
+        "correctivas": correctivas,
+        "auditorias": auditorias,
+        "actividad_total": total_actividad
+    }
+
+
+def clasificar_madurez_kcd(
+    indice
+):
+
+    if indice >= 85:
+
+        return "MADUREZ_OPTIMA"
+
+    if indice >= 70:
+
+        return "MADURO"
+
+    if indice >= 50:
+
+        return "GESTIONADO"
+
+    if indice >= 30:
+
+        return "BASICO"
+
+    return "INICIAL"
+
+
+def clasificar_estado_global_kcd(
+    indice_madurez,
+    riesgo,
+    incidentes
+):
+
+    if (
+        riesgo.get(
+            "estado",
+            "BAJO"
+        ) == "CRITICO"
+        or incidentes.get(
+            "estado",
+            ""
+        ) == "CRITICO"
+    ):
+
+        return "CRITICO"
+
+    if indice_madurez >= 85:
+
+        return "ESTABLE_OPTIMO"
+
+    if indice_madurez >= 70:
+
+        return "ESTABLE"
+
+    if indice_madurez >= 50:
+
+        return "CONTROLADO"
+
+    if indice_madurez >= 30:
+
+        return "EN_RIESGO"
+
+    return "CRITICO"
+
+
+def calcular_indice_madurez_kcd(
+    trazabilidad,
+    salud,
+    efectividad,
+    incidentes,
+    riesgo
+):
+
+    indice = (
+        trazabilidad * 0.20
+        + salud.get(
+            "indice",
+            0
+        ) * 0.25
+        + efectividad.get(
+            "indice",
+            0
+        ) * 0.20
+        + incidentes.get(
+            "indice",
+            0
+        ) * 0.20
+        + riesgo.get(
+            "indice",
+            0
+        ) * 0.15
+    )
+
+    return limitar_indice_kcd(
+        indice
+    )
+
+
+def registrar_madurez_kcd(
+    resultado
+):
+
+    nombre_archivo = "madurez_kcd.csv"
+
+    existe_archivo = os.path.exists(
+        nombre_archivo
+    )
+
+    encabezados = [
+        "fecha",
+        "indice_madurez",
+        "clasificacion_madurez",
+        "estado_global",
+        "salud_operativa",
+        "efectividad_remediaciones",
+        "nivel_incidentes",
+        "riesgo_acumulado",
+        "trazabilidad_documental",
+        "acciones_registradas",
+        "alertas_registradas",
+        "validaciones_registradas"
+    ]
+
+    fila = [
+        datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        resultado.get(
+            "indice_madurez",
+            0
+        ),
+        resultado.get(
+            "clasificacion_madurez",
+            ""
+        ),
+        resultado.get(
+            "estado_global",
+            ""
+        ),
+        resultado.get(
+            "salud_operativa",
+            {}
+        ).get(
+            "estado",
+            ""
+        ),
+        resultado.get(
+            "efectividad_remediaciones",
+            {}
+        ).get(
+            "estado",
+            ""
+        ),
+        resultado.get(
+            "nivel_incidentes",
+            {}
+        ).get(
+            "estado",
+            ""
+        ),
+        resultado.get(
+            "riesgo_acumulado",
+            {}
+        ).get(
+            "estado",
+            ""
+        ),
+        resultado.get(
+            "trazabilidad_documental",
+            0
+        ),
+        resultado.get(
+            "actividad_mantenimiento",
+            {}
+        ).get(
+            "acciones_registradas",
+            0
+        ),
+        resultado.get(
+            "actividad_mantenimiento",
+            {}
+        ).get(
+            "alertas_registradas",
+            0
+        ),
+        resultado.get(
+            "actividad_mantenimiento",
+            {}
+        ).get(
+            "validaciones_registradas",
+            0
+        )
+    ]
+
+    with open(
+        nombre_archivo,
+        mode="a",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.writer(
+            archivo
+        )
+
+        if not existe_archivo:
+
+            escritor.writerow(
+                encabezados
+            )
+
+        escritor.writerow(
+            fila
+        )
+
+    print(
+        "\n[KCD MADUREZ] Registro guardado en madurez_kcd.csv"
+    )
+
+
+def registrar_dashboard_kcd(
+    resultado
+):
+
+    nombre_archivo = "dashboard_kcd.csv"
+
+    existe_archivo = os.path.exists(
+        nombre_archivo
+    )
+
+    encabezados = [
+        "fecha",
+        "indicador",
+        "valor",
+        "estado",
+        "detalle"
+    ]
+
+    filas = [
+        [
+            datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+            "Indice de Madurez KCD",
+            resultado.get(
+                "indice_madurez",
+                0
+            ),
+            resultado.get(
+                "clasificacion_madurez",
+                ""
+            ),
+            "Indice global 0-100"
+        ],
+        [
+            datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+            "Estado Global",
+            resultado.get(
+                "estado_global",
+                ""
+            ),
+            resultado.get(
+                "estado_global",
+                ""
+            ),
+            "Estado consolidado del sistema"
+        ],
+        [
+            datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+            "Salud Operativa",
+            resultado.get(
+                "salud_operativa",
+                {}
+            ).get(
+                "indice",
+                0
+            ),
+            resultado.get(
+                "salud_operativa",
+                {}
+            ).get(
+                "estado",
+                ""
+            ),
+            "IVK, CPU, RAM y disco"
+        ],
+        [
+            datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+            "Efectividad Remediaciones",
+            resultado.get(
+                "efectividad_remediaciones",
+                {}
+            ).get(
+                "indice",
+                0
+            ),
+            resultado.get(
+                "efectividad_remediaciones",
+                {}
+            ).get(
+                "estado",
+                ""
+            ),
+            "Resultados del Bloque 11"
+        ],
+        [
+            datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+            "Nivel de Incidentes",
+            resultado.get(
+                "nivel_incidentes",
+                {}
+            ).get(
+                "indice",
+                0
+            ),
+            resultado.get(
+                "nivel_incidentes",
+                {}
+            ).get(
+                "estado",
+                ""
+            ),
+            "Incidentes abiertos y cerrados"
+        ],
+        [
+            datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+            "Riesgo Acumulado",
+            resultado.get(
+                "riesgo_acumulado",
+                {}
+            ).get(
+                "puntaje_riesgo",
+                0
+            ),
+            resultado.get(
+                "riesgo_acumulado",
+                {}
+            ).get(
+                "estado",
+                ""
+            ),
+            "Alertas, prediccion e IPK"
+        ],
+        [
+            datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+            "Trazabilidad Documental",
+            resultado.get(
+                "trazabilidad_documental",
+                0
+            ),
+            "AUDITABLE",
+            "Fuentes CSV disponibles"
+        ]
+    ]
+
+    with open(
+        nombre_archivo,
+        mode="a",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.writer(
+            archivo
+        )
+
+        if not existe_archivo:
+
+            escritor.writerow(
+                encabezados
+            )
+
+        for fila in filas:
+
+            escritor.writerow(
+                fila
+            )
+
+    print(
+        "\n[KCD DASHBOARD] Registro guardado en dashboard_kcd.csv"
+    )
+
+
+def mostrar_resumen_madurez_kcd(
+    resultado
+):
+
+    print(
+        "\n[KCD CENTRO DE CONTROL]"
+    )
+
+    print(
+        f"Indice de Madurez KCD: {resultado['indice_madurez']} / 100"
+    )
+
+    print(
+        f"Clasificacion: {resultado['clasificacion_madurez']}"
+    )
+
+    print(
+        f"Estado global: {resultado['estado_global']}"
+    )
+
+    print(
+        f"Salud operativa: {resultado['salud_operativa']['estado']} ({resultado['salud_operativa']['indice']})"
+    )
+
+    print(
+        f"Efectividad remediaciones: {resultado['efectividad_remediaciones']['estado']} ({resultado['efectividad_remediaciones']['indice']})"
+    )
+
+    print(
+        f"Nivel incidentes: {resultado['nivel_incidentes']['estado']} ({resultado['nivel_incidentes']['indice']})"
+    )
+
+    print(
+        f"Riesgo acumulado: {resultado['riesgo_acumulado']['estado']} ({resultado['riesgo_acumulado']['puntaje_riesgo']})"
+    )
+
+    print(
+        f"Trazabilidad documental: {resultado['trazabilidad_documental']}%"
+    )
+
+    print(
+        f"Acciones registradas: {resultado['actividad_mantenimiento']['acciones_registradas']}"
+    )
+
+    print(
+        f"Alertas registradas: {resultado['actividad_mantenimiento']['alertas_registradas']}"
+    )
+
+    print(
+        f"Validaciones registradas: {resultado['actividad_mantenimiento']['validaciones_registradas']}"
+    )
+
+
+def ejecutar_centro_madurez_kcd():
+
+    print(
+        "\n[KCD BLOQUE 16] CENTRO DE CONTROL Y MADUREZ KCD"
+    )
+
+    print(
+        "Modo seguro: solo lee evidencias, calcula indicadores y registra dashboard."
+    )
+
+    evidencias = consolidar_evidencias_madurez_kcd()
+
+    trazabilidad = calcular_trazabilidad_documental_kcd(
+        evidencias
+    )
+
+    salud = calcular_salud_operativa_kcd(
+        evidencias
+    )
+
+    efectividad = calcular_efectividad_remediaciones_kcd(
+        evidencias
+    )
+
+    incidentes = calcular_nivel_incidentes_kcd(
+        evidencias
+    )
+
+    riesgo = calcular_riesgo_acumulado_kcd(
+        evidencias
+    )
+
+    actividad = calcular_actividad_mantenimiento_kcd(
+        evidencias
+    )
+
+    indice_madurez = calcular_indice_madurez_kcd(
+        trazabilidad,
+        salud,
+        efectividad,
+        incidentes,
+        riesgo
+    )
+
+    clasificacion = clasificar_madurez_kcd(
+        indice_madurez
+    )
+
+    estado_global = clasificar_estado_global_kcd(
+        indice_madurez,
+        riesgo,
+        incidentes
+    )
+
+    resultado = {
+        "fecha": datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        "indice_madurez": indice_madurez,
+        "clasificacion_madurez": clasificacion,
+        "estado_global": estado_global,
+        "salud_operativa": salud,
+        "efectividad_remediaciones": efectividad,
+        "nivel_incidentes": incidentes,
+        "riesgo_acumulado": riesgo,
+        "trazabilidad_documental": trazabilidad,
+        "actividad_mantenimiento": actividad
+    }
+
+    registrar_madurez_kcd(
+        resultado
+    )
+
+    registrar_dashboard_kcd(
+        resultado
+    )
+
+    try:
+
+        registrar_accion_kcd(
+            "CENTRO_MADUREZ_KCD",
+            estado_global,
+            f"Indice de Madurez KCD: {indice_madurez}"
+        )
+
+    except Exception:
+
+        pass
+
+    mostrar_resumen_madurez_kcd(
+        resultado
+    )
+
+    return resultado

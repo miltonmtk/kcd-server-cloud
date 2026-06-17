@@ -25,3 +25,4 @@ fecha_hora,accion,resultado,detalle
 2026-06-17 05:01:03,INCIDENTE_ABIERTO,CRITICO,INC-KCD-000010 | Accion preparada de prioridad CRITICO: IVK bajo (45.0%). | Preparar remediacion con Bloque 10 y validar con Bloque 11.
 2026-06-17 05:01:03,INCIDENTE_ABIERTO,CRITICO,INC-KCD-000011 | Accion preparada de prioridad ALTO: RAM elevada (83.9%). | Monitorear aplicaciones de alto consumo.
 2026-06-17 05:01:03,INCIDENTE_ABIERTO,CRITICO,"INC-KCD-000012 | Orquestacion KCD requiere atencion: IPK=100, accion=Evaluar ampliacion fisica de memoria RAM."
+2026-06-17 05:28:13,CENTRO_MADUREZ_KCD,CRITICO,Indice de Madurez KCD: 31.43
