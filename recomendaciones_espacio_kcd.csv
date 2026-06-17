@@ -1,0 +1,6 @@
+fecha,nivel_riesgo,accion_recomendada,espacio_recuperable_mb,espacio_recuperable_gb,detalle
+2026-06-17 07:59:28,MODERADO,Limpiar cache de Chrome solo con autorizacion del usuario.,3133.03,3.06,Revisar AppData Local y caches de aplicaciones. No borrar carpetas manualmente.
+2026-06-17 07:59:28,MODERADO,No borrar perfiles de Chrome manualmente.,3133.03,3.06,Revisar AppData Local y caches de aplicaciones. No borrar carpetas manualmente.
+2026-06-17 07:59:28,MODERADO,"Revisar AppData Local antes de limpiar. Priorizar caches, no datos del usuario.",3133.03,3.06,Revisar AppData Local y caches de aplicaciones. No borrar carpetas manualmente.
+2026-06-17 07:59:28,MODERADO,"Revisar proyectos grandes, entornos virtuales y carpetas temporales.",3133.03,3.06,Revisar AppData Local y caches de aplicaciones. No borrar carpetas manualmente.
+2026-06-17 07:59:28,MODERADO,Preparar accion segura para Bloque 10 sin ejecutar limpieza automatica.,3133.03,3.06,Revisar AppData Local y caches de aplicaciones. No borrar carpetas manualmente.

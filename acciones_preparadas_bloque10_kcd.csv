@@ -4,3 +4,4 @@ fecha_hora,origen,tipo_alerta,nivel,problema,accion_sugerida,estado,cpu,ram,disc
 2026-06-16 22:24:00,BLOQUE_12_MONITOREO,ESPACIO_LIBRE,CRITICO,Espacio libre critico (12.64%).,Preparar accion de liberacion de espacio para Bloque 10.,PENDIENTE_BLOQUE_10,11.4,84.1,87.4,12.64,45.0,12,646.86
 2026-06-16 22:24:00,BLOQUE_12_MONITOREO,IVK,CRITICO,IVK bajo (45.0%).,Preparar remediacion con Bloque 10 y validar con Bloque 11.,PENDIENTE_BLOQUE_10,11.4,84.1,87.4,12.64,45.0,12,646.86
 2026-06-16 22:24:07,BLOQUE_12_MONITOREO,RAM,ALTO,RAM elevada (83.9%).,Monitorear aplicaciones de alto consumo.,PENDIENTE_BLOQUE_10,10.6,83.9,87.4,12.64,45.0,12,654.2
+2026-06-17 07:59:28,BLOQUE_17_INVESTIGACION_ESPACIO,ESPACIO_RECUPERABLE,MODERADO,Espacio recuperable estimado: 3.06 GB.,Revisar AppData Local y caches de aplicaciones. No borrar carpetas manualmente.,PENDIENTE_BLOQUE_10,0,0,0,0,0,0,0

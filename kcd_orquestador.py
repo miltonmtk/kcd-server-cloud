@@ -10515,3 +10515,1209 @@ def ejecutar_centro_madurez_kcd():
     )
 
     return resultado
+
+
+# ==============================================================================
+# BLOQUE 17.0 - INVESTIGACION AUTOMATICA DE ESPACIO RECUPERABLE KCD
+# ==============================================================================
+#
+# 17.1 Analisis de carpetas grandes del usuario
+# 17.2 Analisis profundo de AppData
+# 17.3 Deteccion de aplicaciones grandes
+# 17.4 Analisis especializado de Chrome
+# 17.5 Clasificacion de carpetas
+# 17.6 Calculo de espacio recuperable
+# 17.7 Recomendaciones de espacio
+# 17.8 Evidencia CSV
+# 17.9 Resumen ejecutivo de espacio
+#
+# ==============================================================================
+
+def obtener_rutas_usuario_espacio_kcd():
+
+    usuario = os.path.expanduser(
+        "~"
+    )
+
+    rutas = {
+        "AppData": os.path.join(
+            usuario,
+            "AppData"
+        ),
+        "AppData_Local": os.environ.get(
+            "LOCALAPPDATA",
+            os.path.join(
+                usuario,
+                "AppData",
+                "Local"
+            )
+        ),
+        "AppData_Roaming": os.environ.get(
+            "APPDATA",
+            os.path.join(
+                usuario,
+                "AppData",
+                "Roaming"
+            )
+        ),
+        "AppData_LocalLow": os.path.join(
+            usuario,
+            "AppData",
+            "LocalLow"
+        ),
+        "Documents": os.path.join(
+            usuario,
+            "Documents"
+        ),
+        "Downloads": os.path.join(
+            usuario,
+            "Downloads"
+        ),
+        "PycharmProjects": os.path.join(
+            usuario,
+            "PycharmProjects"
+        )
+    }
+
+    return rutas
+
+
+def convertir_bytes_a_mb_kcd(
+    bytes_valor
+):
+
+    return round(
+        bytes_valor / (1024 ** 2),
+        2
+    )
+
+
+def convertir_mb_a_gb_kcd(
+    mb_valor
+):
+
+    return round(
+        mb_valor / 1024,
+        2
+    )
+
+
+def calcular_tamano_ruta_kcd(
+    ruta,
+    limite_archivos=200000
+):
+
+    total_bytes = 0
+    archivos_contados = 0
+    errores = 0
+
+    if not os.path.exists(
+        ruta
+    ):
+
+        return {
+            "existe": False,
+            "tamano_mb": 0,
+            "archivos_contados": 0,
+            "errores": 0
+        }
+
+    if os.path.isfile(
+        ruta
+    ):
+
+        try:
+
+            total_bytes = os.path.getsize(
+                ruta
+            )
+
+            return {
+                "existe": True,
+                "tamano_mb": convertir_bytes_a_mb_kcd(
+                    total_bytes
+                ),
+                "archivos_contados": 1,
+                "errores": 0
+            }
+
+        except Exception:
+
+            return {
+                "existe": True,
+                "tamano_mb": 0,
+                "archivos_contados": 0,
+                "errores": 1
+            }
+
+    for raiz, carpetas, archivos in os.walk(
+        ruta
+    ):
+
+        for archivo in archivos:
+
+            try:
+
+                ruta_archivo = os.path.join(
+                    raiz,
+                    archivo
+                )
+
+                total_bytes += os.path.getsize(
+                    ruta_archivo
+                )
+
+                archivos_contados += 1
+
+                if archivos_contados >= limite_archivos:
+
+                    return {
+                        "existe": True,
+                        "tamano_mb": convertir_bytes_a_mb_kcd(
+                            total_bytes
+                        ),
+                        "archivos_contados": archivos_contados,
+                        "errores": errores
+                    }
+
+            except Exception:
+
+                errores += 1
+
+                continue
+
+    return {
+        "existe": True,
+        "tamano_mb": convertir_bytes_a_mb_kcd(
+            total_bytes
+        ),
+        "archivos_contados": archivos_contados,
+        "errores": errores
+    }
+
+
+def clasificar_ruta_espacio_kcd(
+    ruta,
+    aplicacion="GENERAL"
+):
+
+    ruta_min = str(
+        ruta
+    ).lower()
+
+    if (
+        "cache" in ruta_min
+        or "code cache" in ruta_min
+        or "gpucache" in ruta_min
+        or "cachestorage" in ruta_min
+        or "temporary" in ruta_min
+        or "temp" in ruta_min
+    ):
+
+        return "POSIBLE_LIMPIEZA"
+
+    if (
+        "user data" in ruta_min
+        or "profile" in ruta_min
+        or "default" in ruta_min
+        or "documents" in ruta_min
+        or "downloads" in ruta_min
+        or "pycharmprojects" in ruta_min
+    ):
+
+        return "REQUIERE_AUTORIZACION"
+
+    if (
+        "appdata" in ruta_min
+        and aplicacion in [
+            "Chrome",
+            "Google",
+            "Microsoft",
+            "Adobe",
+            "JetBrains",
+            "Docker",
+            "Zoom",
+            "Mozilla"
+        ]
+    ):
+
+        return "SEGURO_ANALIZAR"
+
+    if (
+        "windows" in ruta_min
+        or "system32" in ruta_min
+        or "program files" in ruta_min
+    ):
+
+        return "NO_TOCAR"
+
+    return "SEGURO_ANALIZAR"
+
+
+def estimar_recuperable_kcd(
+    clasificacion,
+    tamano_mb
+):
+
+    if clasificacion == "POSIBLE_LIMPIEZA":
+
+        return round(
+            tamano_mb * 0.85,
+            2
+        )
+
+    if clasificacion == "SEGURO_ANALIZAR":
+
+        return round(
+            tamano_mb * 0.10,
+            2
+        )
+
+    return 0
+
+
+def detectar_aplicacion_por_ruta_kcd(
+    ruta
+):
+
+    ruta_min = str(
+        ruta
+    ).lower()
+
+    aplicaciones = {
+        "Chrome": "chrome",
+        "Google": "google",
+        "Microsoft": "microsoft",
+        "Adobe": "adobe",
+        "JetBrains": "jetbrains",
+        "Docker": "docker",
+        "Zoom": "zoom",
+        "Mozilla": "mozilla"
+    }
+
+    for nombre, patron in aplicaciones.items():
+
+        if patron in ruta_min:
+
+            return nombre
+
+    return "GENERAL"
+
+
+def crear_registro_espacio_kcd(
+    origen,
+    ruta,
+    tipo,
+    aplicacion,
+    tamano_mb,
+    clasificacion,
+    recomendacion
+):
+
+    recuperable_mb = estimar_recuperable_kcd(
+        clasificacion,
+        tamano_mb
+    )
+
+    return {
+        "fecha": datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        "origen": origen,
+        "ruta": ruta,
+        "tipo": tipo,
+        "aplicacion": aplicacion,
+        "tamano_mb": tamano_mb,
+        "tamano_gb": convertir_mb_a_gb_kcd(
+            tamano_mb
+        ),
+        "clasificacion": clasificacion,
+        "recuperable_mb": recuperable_mb,
+        "recuperable_gb": convertir_mb_a_gb_kcd(
+            recuperable_mb
+        ),
+        "recomendacion": recomendacion
+    }
+
+
+def analizar_carpetas_usuario_kcd():
+
+    print(
+        "\n[KCD ESPACIO] Analizando carpetas principales del usuario..."
+    )
+
+    rutas = obtener_rutas_usuario_espacio_kcd()
+
+    registros = []
+
+    for nombre, ruta in rutas.items():
+
+        resultado = calcular_tamano_ruta_kcd(
+            ruta
+        )
+
+        if not resultado["existe"]:
+
+            continue
+
+        aplicacion = detectar_aplicacion_por_ruta_kcd(
+            ruta
+        )
+
+        clasificacion = clasificar_ruta_espacio_kcd(
+            ruta,
+            aplicacion
+        )
+
+        recomendacion = "Analizar contenido antes de cualquier accion."
+
+        if nombre == "Downloads":
+
+            recomendacion = "Revisar descargas antiguas, duplicados o instaladores."
+
+        elif nombre == "Documents":
+
+            recomendacion = "Revisar documentos grandes antes de mover o respaldar."
+
+        elif nombre == "PycharmProjects":
+
+            recomendacion = "Revisar proyectos grandes, entornos virtuales y archivos temporales."
+
+        elif "AppData" in nombre:
+
+            recomendacion = "Analizar consumo de aplicaciones. No borrar carpetas manualmente."
+
+        registro = crear_registro_espacio_kcd(
+            nombre,
+            ruta,
+            "CARPETA_USUARIO",
+            aplicacion,
+            resultado["tamano_mb"],
+            clasificacion,
+            recomendacion
+        )
+
+        registros.append(
+            registro
+        )
+
+        print(
+            f"{nombre}: {registro['tamano_gb']} GB"
+        )
+
+    return registros
+
+
+def analizar_aplicaciones_appdata_kcd():
+
+    print(
+        "\n[KCD ESPACIO] Analizando aplicaciones grandes en AppData..."
+    )
+
+    rutas = obtener_rutas_usuario_espacio_kcd()
+
+    bases_appdata = [
+        rutas.get(
+            "AppData_Local",
+            ""
+        ),
+        rutas.get(
+            "AppData_Roaming",
+            ""
+        ),
+        rutas.get(
+            "AppData_LocalLow",
+            ""
+        )
+    ]
+
+    aplicaciones = [
+        "Chrome",
+        "Google",
+        "Microsoft",
+        "Adobe",
+        "JetBrains",
+        "Docker",
+        "Zoom",
+        "Mozilla"
+    ]
+
+    registros = []
+
+    for base in bases_appdata:
+
+        if not os.path.exists(
+            base
+        ):
+
+            continue
+
+        for raiz, carpetas, archivos in os.walk(
+            base
+        ):
+
+            nivel_relativo = raiz.replace(
+                base,
+                ""
+            ).count(
+                os.sep
+            )
+
+            if nivel_relativo > 2:
+
+                carpetas[:] = []
+
+                continue
+
+            aplicacion_detectada = detectar_aplicacion_por_ruta_kcd(
+                raiz
+            )
+
+            if aplicacion_detectada not in aplicaciones:
+
+                continue
+
+            resultado = calcular_tamano_ruta_kcd(
+                raiz,
+                limite_archivos=80000
+            )
+
+            clasificacion = clasificar_ruta_espacio_kcd(
+                raiz,
+                aplicacion_detectada
+            )
+
+            recomendacion = (
+                "Aplicacion detectada en AppData. Revisar antes de cualquier limpieza."
+            )
+
+            if clasificacion == "POSIBLE_LIMPIEZA":
+
+                recomendacion = (
+                    "Posible cache o temporal. Preparar limpieza autorizada con Bloque 10."
+                )
+
+            registro = crear_registro_espacio_kcd(
+                "AppData",
+                raiz,
+                "APLICACION_APPDATA",
+                aplicacion_detectada,
+                resultado["tamano_mb"],
+                clasificacion,
+                recomendacion
+            )
+
+            registros.append(
+                registro
+            )
+
+            carpetas[:] = []
+
+    registros.sort(
+        key=lambda item: item["tamano_mb"],
+        reverse=True
+    )
+
+    return registros[
+        :30
+    ]
+
+
+def rutas_chrome_kcd():
+
+    local_appdata = os.environ.get(
+        "LOCALAPPDATA",
+        ""
+    )
+
+    base_chrome = os.path.join(
+        local_appdata,
+        "Google",
+        "Chrome",
+        "User Data"
+    )
+
+    return base_chrome
+
+
+def analizar_chrome_kcd():
+
+    print(
+        "\n[KCD ESPACIO] Analizando Chrome sin cerrar procesos..."
+    )
+
+    base_chrome = rutas_chrome_kcd()
+
+    registros = []
+
+    if not os.path.exists(
+        base_chrome
+    ):
+
+        print(
+            "[KCD ESPACIO] Chrome User Data no encontrado."
+        )
+
+        return registros
+
+    total_chrome = calcular_tamano_ruta_kcd(
+        base_chrome
+    )
+
+    registros.append(
+        crear_registro_espacio_kcd(
+            "Chrome",
+            base_chrome,
+            "CHROME_TOTAL",
+            "Chrome",
+            total_chrome["tamano_mb"],
+            "REQUIERE_AUTORIZACION",
+            "No borrar User Data. Contiene perfiles, historial, sesiones y datos del usuario."
+        )
+    )
+
+    perfiles = []
+
+    try:
+
+        for item in os.listdir(
+            base_chrome
+        ):
+
+            ruta_item = os.path.join(
+                base_chrome,
+                item
+            )
+
+            if not os.path.isdir(
+                ruta_item
+            ):
+
+                continue
+
+            nombre = item.lower()
+
+            if (
+                nombre == "default"
+                or nombre.startswith(
+                    "profile"
+                )
+                or nombre == "guest profile"
+            ):
+
+                perfiles.append(
+                    ruta_item
+                )
+
+    except Exception:
+
+        perfiles = []
+
+    for perfil in perfiles:
+
+        resultado_perfil = calcular_tamano_ruta_kcd(
+            perfil
+        )
+
+        registros.append(
+            crear_registro_espacio_kcd(
+                "Chrome",
+                perfil,
+                "CHROME_PERFIL",
+                "Chrome",
+                resultado_perfil["tamano_mb"],
+                "NO_TOCAR",
+                "Perfil de usuario. No borrar manualmente."
+            )
+        )
+
+        rutas_cache = [
+            (
+                "CHROME_CACHE",
+                os.path.join(
+                    perfil,
+                    "Cache"
+                ),
+                "Cache de Chrome. Posible limpieza con autorizacion."
+            ),
+            (
+                "CHROME_CODE_CACHE",
+                os.path.join(
+                    perfil,
+                    "Code Cache"
+                ),
+                "Code Cache de Chrome. Posible limpieza con autorizacion."
+            ),
+            (
+                "CHROME_GPUCACHE",
+                os.path.join(
+                    perfil,
+                    "GPUCache"
+                ),
+                "GPUCache de Chrome. Posible limpieza con autorizacion."
+            ),
+            (
+                "CHROME_SERVICE_WORKER_CACHE",
+                os.path.join(
+                    perfil,
+                    "Service Worker",
+                    "CacheStorage"
+                ),
+                "Service Worker CacheStorage. Revisar antes de limpiar."
+            )
+        ]
+
+        for tipo, ruta_cache, recomendacion in rutas_cache:
+
+            if not os.path.exists(
+                ruta_cache
+            ):
+
+                continue
+
+            resultado_cache = calcular_tamano_ruta_kcd(
+                ruta_cache
+            )
+
+            registros.append(
+                crear_registro_espacio_kcd(
+                    "Chrome",
+                    ruta_cache,
+                    tipo,
+                    "Chrome",
+                    resultado_cache["tamano_mb"],
+                    "POSIBLE_LIMPIEZA",
+                    recomendacion
+                )
+            )
+
+    return registros
+
+
+def registrar_investigacion_espacio_kcd(
+    registros
+):
+
+    nombre_archivo = "investigacion_espacio_kcd.csv"
+
+    existe_archivo = os.path.exists(
+        nombre_archivo
+    )
+
+    encabezados = [
+        "fecha",
+        "origen",
+        "ruta",
+        "tipo",
+        "aplicacion",
+        "tamano_mb",
+        "tamano_gb",
+        "clasificacion",
+        "recuperable_mb",
+        "recuperable_gb",
+        "recomendacion"
+    ]
+
+    with open(
+        nombre_archivo,
+        mode="a",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.DictWriter(
+            archivo,
+            fieldnames=encabezados
+        )
+
+        if not existe_archivo:
+
+            escritor.writeheader()
+
+        for registro in registros:
+
+            escritor.writerow(
+                registro
+            )
+
+    print(
+        "\n[KCD ESPACIO] Evidencia registrada en investigacion_espacio_kcd.csv"
+    )
+
+
+def registrar_recomendaciones_espacio_kcd(
+    resumen,
+    recomendaciones
+):
+
+    nombre_archivo = "recomendaciones_espacio_kcd.csv"
+
+    existe_archivo = os.path.exists(
+        nombre_archivo
+    )
+
+    encabezados = [
+        "fecha",
+        "nivel_riesgo",
+        "accion_recomendada",
+        "espacio_recuperable_mb",
+        "espacio_recuperable_gb",
+        "detalle"
+    ]
+
+    with open(
+        nombre_archivo,
+        mode="a",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.writer(
+            archivo
+        )
+
+        if not existe_archivo:
+
+            escritor.writerow(
+                encabezados
+            )
+
+        for recomendacion in recomendaciones:
+
+            escritor.writerow([
+                datetime.now().strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
+                resumen.get(
+                    "nivel_riesgo",
+                    "BAJO"
+                ),
+                recomendacion,
+                resumen.get(
+                    "recuperable_total_mb",
+                    0
+                ),
+                resumen.get(
+                    "recuperable_total_gb",
+                    0
+                ),
+                resumen.get(
+                    "accion_recomendada",
+                    ""
+                )
+            ])
+
+
+def preparar_datos_bloque10_espacio_kcd(
+    resumen
+):
+
+    nombre_archivo = "acciones_preparadas_bloque10_kcd.csv"
+
+    existe_archivo = os.path.exists(
+        nombre_archivo
+    )
+
+    encabezados = [
+        "fecha_hora",
+        "origen",
+        "tipo_alerta",
+        "nivel",
+        "problema",
+        "accion_sugerida",
+        "estado",
+        "cpu",
+        "ram",
+        "disco",
+        "espacio_libre_pct",
+        "ivk",
+        "chrome_procesos",
+        "chrome_ram_mb"
+    ]
+
+    problema = (
+        f"Espacio recuperable estimado: {resumen.get('recuperable_total_gb', 0)} GB."
+    )
+
+    accion = resumen.get(
+        "accion_recomendada",
+        "Revisar espacio recuperable antes de cualquier limpieza."
+    )
+
+    with open(
+        nombre_archivo,
+        mode="a",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.writer(
+            archivo
+        )
+
+        if not existe_archivo:
+
+            escritor.writerow(
+                encabezados
+            )
+
+        escritor.writerow([
+            datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+            "BLOQUE_17_INVESTIGACION_ESPACIO",
+            "ESPACIO_RECUPERABLE",
+            resumen.get(
+                "nivel_riesgo",
+                "BAJO"
+            ),
+            problema,
+            accion,
+            "PENDIENTE_BLOQUE_10",
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ])
+
+
+def generar_resumen_espacio_kcd(
+    registros
+):
+
+    if not registros:
+
+        return {
+            "carpeta_mas_pesada": "SIN_DATOS",
+            "aplicacion_mas_pesada": "SIN_DATOS",
+            "recuperable_total_mb": 0,
+            "recuperable_total_gb": 0,
+            "nivel_riesgo": "SIN_DATOS",
+            "accion_recomendada": "No hay datos suficientes para recomendar."
+        }
+
+    carpeta_mas_pesada = max(
+        registros,
+        key=lambda item: item.get(
+            "tamano_mb",
+            0
+        )
+    )
+
+    acumulado_aplicaciones = {}
+
+    recuperable_total_mb = 0
+
+    for registro in registros:
+
+        aplicacion = registro.get(
+            "aplicacion",
+            "GENERAL"
+        )
+
+        acumulado_aplicaciones[aplicacion] = acumulado_aplicaciones.get(
+            aplicacion,
+            0
+        ) + registro.get(
+            "tamano_mb",
+            0
+        )
+
+        recuperable_total_mb += registro.get(
+            "recuperable_mb",
+            0
+        )
+
+    aplicacion_mas_pesada = max(
+        acumulado_aplicaciones,
+        key=acumulado_aplicaciones.get
+    )
+
+    recuperable_total_mb = round(
+        recuperable_total_mb,
+        2
+    )
+
+    recuperable_total_gb = convertir_mb_a_gb_kcd(
+        recuperable_total_mb
+    )
+
+    if recuperable_total_gb >= 10:
+
+        nivel_riesgo = "CRITICO"
+
+    elif recuperable_total_gb >= 5:
+
+        nivel_riesgo = "ALTO"
+
+    elif recuperable_total_gb >= 1:
+
+        nivel_riesgo = "MODERADO"
+
+    else:
+
+        nivel_riesgo = "BAJO"
+
+    if aplicacion_mas_pesada == "Chrome" and recuperable_total_gb >= 1:
+
+        accion_recomendada = (
+            "Limpiar cache de Chrome solo con autorizacion. No borrar perfiles."
+        )
+
+    elif "PycharmProjects" in carpeta_mas_pesada.get(
+        "ruta",
+        ""
+    ):
+
+        accion_recomendada = (
+            "Revisar proyectos grandes, entornos virtuales y archivos temporales."
+        )
+
+    elif "AppData" in carpeta_mas_pesada.get(
+        "ruta",
+        ""
+    ):
+
+        accion_recomendada = (
+            "Revisar AppData Local y caches de aplicaciones. No borrar carpetas manualmente."
+        )
+
+    else:
+
+        accion_recomendada = (
+            "Revisar carpetas grandes y preparar limpieza autorizada con Bloque 10."
+        )
+
+    return {
+        "carpeta_mas_pesada": carpeta_mas_pesada.get(
+            "ruta",
+            ""
+        ),
+        "aplicacion_mas_pesada": aplicacion_mas_pesada,
+        "recuperable_total_mb": recuperable_total_mb,
+        "recuperable_total_gb": recuperable_total_gb,
+        "nivel_riesgo": nivel_riesgo,
+        "accion_recomendada": accion_recomendada
+    }
+
+
+def generar_recomendaciones_espacio_kcd(
+    registros,
+    resumen
+):
+
+    recomendaciones = []
+
+    hay_chrome_cache = False
+    hay_appdata = False
+    hay_pycharm = False
+
+    for registro in registros:
+
+        tipo = registro.get(
+            "tipo",
+            ""
+        )
+
+        ruta = registro.get(
+            "ruta",
+            ""
+        )
+
+        if (
+            registro.get(
+                "aplicacion",
+                ""
+            ) == "Chrome"
+            and "CACHE" in tipo
+        ):
+
+            hay_chrome_cache = True
+
+        if "AppData" in ruta:
+
+            hay_appdata = True
+
+        if "PycharmProjects" in ruta:
+
+            hay_pycharm = True
+
+    if hay_chrome_cache:
+
+        recomendaciones.append(
+            "Limpiar cache de Chrome solo con autorizacion del usuario."
+        )
+
+        recomendaciones.append(
+            "No borrar perfiles de Chrome manualmente."
+        )
+
+    if hay_appdata:
+
+        recomendaciones.append(
+            "Revisar AppData Local antes de limpiar. Priorizar caches, no datos del usuario."
+        )
+
+    if hay_pycharm:
+
+        recomendaciones.append(
+            "Revisar proyectos grandes, entornos virtuales y carpetas temporales."
+        )
+
+    if resumen.get(
+        "recuperable_total_gb",
+        0
+    ) >= 1:
+
+        recomendaciones.append(
+            "Preparar accion segura para Bloque 10 sin ejecutar limpieza automatica."
+        )
+
+    if not recomendaciones:
+
+        recomendaciones.append(
+            "No se detecta espacio recuperable significativo."
+        )
+
+    return recomendaciones
+
+
+def mostrar_resumen_espacio_kcd(
+    resumen,
+    recomendaciones
+):
+
+    print(
+        "\n[KCD INVESTIGACION ESPACIO]"
+    )
+
+    print(
+        f"Carpeta mas pesada: {resumen.get('carpeta_mas_pesada', '')}"
+    )
+
+    print(
+        f"Aplicacion mas pesada: {resumen.get('aplicacion_mas_pesada', '')}"
+    )
+
+    print(
+        f"Espacio recuperable estimado: {resumen.get('recuperable_total_gb', 0)} GB"
+    )
+
+    print(
+        f"Nivel de riesgo: {resumen.get('nivel_riesgo', '')}"
+    )
+
+    print(
+        f"Accion recomendada: {resumen.get('accion_recomendada', '')}"
+    )
+
+    print(
+        "\nRecomendaciones:"
+    )
+
+    for recomendacion in recomendaciones:
+
+        print(
+            f"- {recomendacion}"
+        )
+
+
+def ejecutar_investigacion_espacio_kcd():
+
+    print(
+        "\n[KCD BLOQUE 17] INVESTIGACION AUTOMATICA DE ESPACIO RECUPERABLE"
+    )
+
+    print(
+        "Modo seguro: no borra archivos, no cierra Chrome, no limpia caches y no modifica Windows."
+    )
+
+    registros = []
+
+    registros.extend(
+        analizar_carpetas_usuario_kcd()
+    )
+
+    registros.extend(
+        analizar_aplicaciones_appdata_kcd()
+    )
+
+    registros.extend(
+        analizar_chrome_kcd()
+    )
+
+    registros = [
+        registro
+        for registro in registros
+        if registro.get(
+            "tamano_mb",
+            0
+        ) > 0
+    ]
+
+    registros.sort(
+        key=lambda item: item.get(
+            "tamano_mb",
+            0
+        ),
+        reverse=True
+    )
+
+    resumen = generar_resumen_espacio_kcd(
+        registros
+    )
+
+    recomendaciones = generar_recomendaciones_espacio_kcd(
+        registros,
+        resumen
+    )
+
+    registrar_investigacion_espacio_kcd(
+        registros
+    )
+
+    registrar_recomendaciones_espacio_kcd(
+        resumen,
+        recomendaciones
+    )
+
+    if resumen.get(
+        "recuperable_total_gb",
+        0
+    ) >= 1:
+
+        preparar_datos_bloque10_espacio_kcd(
+            resumen
+        )
+
+    try:
+
+        registrar_accion_kcd(
+            "INVESTIGACION_ESPACIO",
+            resumen.get(
+                "nivel_riesgo",
+                "BAJO"
+            ),
+            resumen.get(
+                "accion_recomendada",
+                ""
+            )
+        )
+
+    except Exception:
+
+        pass
+
+    mostrar_resumen_espacio_kcd(
+        resumen,
+        recomendaciones
+    )
+
+    return {
+        "registros": registros,
+        "resumen": resumen,
+        "recomendaciones": recomendaciones
+    }
