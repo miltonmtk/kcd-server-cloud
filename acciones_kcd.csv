@@ -27,3 +27,8 @@ fecha_hora,accion,resultado,detalle
 2026-06-17 05:01:03,INCIDENTE_ABIERTO,CRITICO,"INC-KCD-000012 | Orquestacion KCD requiere atencion: IPK=100, accion=Evaluar ampliacion fisica de memoria RAM."
 2026-06-17 05:28:13,CENTRO_MADUREZ_KCD,CRITICO,Indice de Madurez KCD: 31.43
 2026-06-17 07:59:28,INVESTIGACION_ESPACIO,MODERADO,Revisar AppData Local y caches de aplicaciones. No borrar carpetas manualmente.
+2026-06-17 08:24:36,REMEDIACION_AUTORIZADA,EJECUTADO,Limpiar temporales KCD.
+2026-06-17 08:25:25,REMEDIACION_AUTORIZADA,SOLO_REGISTRO_MANUAL,Monitorear aplicaciones de alto consumo.
+2026-06-17 08:29:54,REMEDIACION_AUTORIZADA,EJECUTADO,Limpiar cache de Chrome solo con autorizacion del usuario.
+2026-06-17 08:31:48,REMEDIACION_AUTORIZADA,EJECUTADO,Limpiar cache de Chrome autorizada.
+2026-06-17 08:31:53,VALIDACION_RESULTADOS,REQUIERE HARDWARE,REMEDIACION_AUTORIZADA_KCD

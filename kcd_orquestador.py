@@ -11721,3 +11721,1229 @@ def ejecutar_investigacion_espacio_kcd():
         "resumen": resumen,
         "recomendaciones": recomendaciones
     }
+
+# ==============================================================================
+# BLOQUE 18.0 - REMEDIACION INTELIGENTE AUTORIZADA KCD
+# ==============================================================================
+#
+# 18.1 Lectura de recomendaciones
+# 18.2 Clasificacion de acciones candidatas
+# 18.3 Solicitud de autorizacion explicita
+# 18.4 Ejecucion segura autorizada
+# 18.5 Medicion ANTES y DESPUES
+# 18.6 Evidencia de remediacion
+# 18.7 Validacion con Bloque 11
+#
+# ==============================================================================
+
+def leer_csv_remediacion_kcd(
+    nombre_archivo
+):
+
+    if not os.path.exists(
+        nombre_archivo
+    ):
+
+        return []
+
+    registros = []
+
+    try:
+
+        with open(
+            nombre_archivo,
+            mode="r",
+            encoding="utf-8"
+        ) as archivo:
+
+            lector = csv.DictReader(
+                archivo
+            )
+
+            for fila in lector:
+
+                registros.append(
+                    fila
+                )
+
+    except Exception as error:
+
+        print(
+            f"\n[KCD REMEDIACION ERROR] No se pudo leer {nombre_archivo}: {error}"
+        )
+
+        return []
+
+    return registros
+
+
+def convertir_numero_remediacion_kcd(
+    valor,
+    defecto=0
+):
+
+    try:
+
+        return float(
+            valor
+        )
+
+    except Exception:
+
+        return defecto
+
+
+def obtener_chrome_user_data_kcd():
+
+    local_appdata = os.environ.get(
+        "LOCALAPPDATA",
+        ""
+    )
+
+    return os.path.join(
+        local_appdata,
+        "Google",
+        "Chrome",
+        "User Data"
+    )
+
+
+def ruta_segura_cache_chrome_kcd(
+    ruta
+):
+
+    ruta_abs = os.path.abspath(
+        ruta
+    ).lower()
+
+    base_chrome = os.path.abspath(
+        obtener_chrome_user_data_kcd()
+    ).lower()
+
+    if not ruta_abs.startswith(
+        base_chrome
+    ):
+
+        return False
+
+    permitidos = [
+        "cache",
+        "code cache",
+        "gpucache",
+        "cachestorage"
+    ]
+
+    for permitido in permitidos:
+
+        if permitido in ruta_abs:
+
+            return True
+
+    bloqueados = [
+        "login data",
+        "cookies",
+        "history",
+        "preferences",
+        "local state",
+        "password",
+        "sessions"
+    ]
+
+    for bloqueado in bloqueados:
+
+        if bloqueado in ruta_abs:
+
+            return False
+
+    return False
+
+
+def medir_estado_remediacion_kcd(
+    etapa
+):
+
+    try:
+
+        medicion = medir_estado_validacion_kcd(
+            etapa,
+            muestras=3
+        )
+
+        return medicion
+
+    except Exception:
+
+        datos = medir_velocidad_kcd()
+
+        ivk = calcular_indice_velocidad(
+            datos["cpu"],
+            datos["ram"],
+            datos["disco"]
+        )
+
+        disco = psutil.disk_usage(
+            "/"
+        )
+
+        espacio_libre_pct = round(
+            (disco.free / disco.total) * 100,
+            2
+        )
+
+        return {
+            "etapa": etapa,
+            "fecha_hora": datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+            "cpu": float(
+                datos.get(
+                    "cpu",
+                    0
+                )
+            ),
+            "ram": float(
+                datos.get(
+                    "ram",
+                    0
+                )
+            ),
+            "disco": float(
+                datos.get(
+                    "disco",
+                    0
+                )
+            ),
+            "espacio_libre_pct": espacio_libre_pct,
+            "ivk": float(
+                ivk
+            )
+        }
+
+
+def clasificar_accion_remediacion_kcd(
+    texto
+):
+
+    texto = str(
+        texto
+    ).lower()
+
+    if (
+        "perfil" in texto
+        or "password" in texto
+        or "contraseña" in texto
+        or "cookies" in texto
+        or "historial" in texto
+        or "documents" in texto
+        or "documentos" in texto
+        or "downloads" in texto
+        or "descargas" in texto
+        or "appdata completo" in texto
+        or "user data" in texto
+    ):
+
+        return "NO_RECOMENDADA"
+
+    if (
+        "proyecto" in texto
+        or "pycharmprojects" in texto
+        or "archivos grandes" in texto
+        or "revisar appdata" in texto
+        or "revisar carpeta" in texto
+    ):
+
+        return "SOLO_MANUAL"
+
+    if (
+        "cache de chrome" in texto
+        or "caché de chrome" in texto
+        or "chrome cache" in texto
+        or "code cache" in texto
+        or "gpucache" in texto
+        or "cachestorage" in texto
+    ):
+
+        return "REQUIERE_AUTORIZACION"
+
+    if (
+        "temporal" in texto
+        or "temporales kcd" in texto
+        or "kcd temp" in texto
+    ):
+
+        return "SEGURA"
+
+    return "REQUIERE_AUTORIZACION"
+
+
+def crear_candidata_remediacion_kcd(
+    origen,
+    accion,
+    impacto_estimado_mb=0
+):
+
+    clasificacion = clasificar_accion_remediacion_kcd(
+        accion
+    )
+
+    return {
+        "origen": origen,
+        "accion": accion,
+        "clasificacion": clasificacion,
+        "impacto_estimado_mb": round(
+            impacto_estimado_mb,
+            2
+        ),
+        "impacto_estimado_gb": round(
+            impacto_estimado_mb / 1024,
+            2
+        )
+    }
+
+
+def leer_candidatas_bloque10_kcd():
+
+    registros = leer_csv_remediacion_kcd(
+        "acciones_preparadas_bloque10_kcd.csv"
+    )
+
+    candidatas = []
+
+    for fila in registros:
+
+        accion = fila.get(
+            "accion_sugerida",
+            ""
+        )
+
+        if not accion:
+
+            continue
+
+        candidatas.append(
+            crear_candidata_remediacion_kcd(
+                "BLOQUE_10",
+                accion,
+                0
+            )
+        )
+
+    return candidatas
+
+
+def leer_candidatas_bloque14_kcd():
+
+    registros = leer_csv_remediacion_kcd(
+        "agenda_mantenimiento_kcd.csv"
+    )
+
+    candidatas = []
+
+    for fila in registros:
+
+        accion = fila.get(
+            "accion",
+            ""
+        )
+
+        if not accion:
+
+            continue
+
+        candidatas.append(
+            crear_candidata_remediacion_kcd(
+                "BLOQUE_14",
+                accion,
+                0
+            )
+        )
+
+    return candidatas
+
+
+def leer_candidatas_bloque17_kcd():
+
+    recomendaciones = leer_csv_remediacion_kcd(
+        "recomendaciones_espacio_kcd.csv"
+    )
+
+    investigacion = leer_csv_remediacion_kcd(
+        "investigacion_espacio_kcd.csv"
+    )
+
+    candidatas = []
+
+    for fila in recomendaciones:
+
+        accion = fila.get(
+            "accion_recomendada",
+            ""
+        )
+
+        impacto = convertir_numero_remediacion_kcd(
+            fila.get(
+                "espacio_recuperable_mb",
+                0
+            )
+        )
+
+        if accion:
+
+            candidatas.append(
+                crear_candidata_remediacion_kcd(
+                    "BLOQUE_17",
+                    accion,
+                    impacto
+                )
+            )
+
+    for fila in investigacion:
+
+        clasificacion = fila.get(
+            "clasificacion",
+            ""
+        )
+
+        tipo = fila.get(
+            "tipo",
+            ""
+        )
+
+        ruta = fila.get(
+            "ruta",
+            ""
+        )
+
+        recuperable = convertir_numero_remediacion_kcd(
+            fila.get(
+                "recuperable_mb",
+                0
+            )
+        )
+
+        if (
+            clasificacion == "POSIBLE_LIMPIEZA"
+            and "CHROME" in tipo
+        ):
+
+            candidatas.append(
+                crear_candidata_remediacion_kcd(
+                    "BLOQUE_17_CHROME",
+                    f"Limpiar cache de Chrome autorizada: {ruta}",
+                    recuperable
+                )
+            )
+
+    return candidatas
+
+
+def generar_candidatas_remediacion_kcd():
+
+    candidatas = []
+
+    candidatas.append(
+        crear_candidata_remediacion_kcd(
+            "KCD_BASE",
+            "Limpiar temporales KCD.",
+            0
+        )
+    )
+
+    candidatas.extend(
+        leer_candidatas_bloque10_kcd()
+    )
+
+    candidatas.extend(
+        leer_candidatas_bloque14_kcd()
+    )
+
+    candidatas.extend(
+        leer_candidatas_bloque17_kcd()
+    )
+
+    base_chrome = obtener_chrome_user_data_kcd()
+
+    if os.path.exists(
+        base_chrome
+    ):
+
+        candidatas.append(
+            crear_candidata_remediacion_kcd(
+                "KCD_CHROME",
+                "Limpiar cache de Chrome autorizada.",
+                0
+            )
+        )
+
+    depuradas = []
+    vistas = set()
+
+    for candidata in candidatas:
+
+        clave = (
+            candidata.get(
+                "origen",
+                ""
+            ),
+            candidata.get(
+                "accion",
+                ""
+            )
+        )
+
+        if clave in vistas:
+
+            continue
+
+        vistas.add(
+            clave
+        )
+
+        depuradas.append(
+            candidata
+        )
+
+    return depuradas
+
+
+def mostrar_candidatas_remediacion_kcd(
+    candidatas
+):
+
+    print(
+        "\n[KCD REMEDIACION] Acciones candidatas:"
+    )
+
+    if not candidatas:
+
+        print(
+            "No hay acciones candidatas."
+        )
+
+        return
+
+    for numero, candidata in enumerate(
+        candidatas,
+        start=1
+    ):
+
+        print(
+            f"\n{numero}. {candidata['accion']}"
+        )
+
+        print(
+            f"   Origen: {candidata['origen']}"
+        )
+
+        print(
+            f"   Clasificacion: {candidata['clasificacion']}"
+        )
+
+        print(
+            f"   Impacto estimado: {candidata['impacto_estimado_gb']} GB"
+        )
+
+
+def solicitar_autorizacion_kcd(
+    candidata
+):
+
+    if candidata.get(
+        "clasificacion",
+        ""
+    ) in [
+        "NO_RECOMENDADA",
+        "SOLO_MANUAL"
+    ]:
+
+        print(
+            f"\n[KCD REMEDIACION] No ejecutable automaticamente: {candidata['accion']}"
+        )
+
+        return "NO"
+
+    print(
+        "\n[KCD AUTORIZACION]"
+    )
+
+    print(
+        f"Accion: {candidata['accion']}"
+    )
+
+    print(
+        f"Clasificacion: {candidata['clasificacion']}"
+    )
+
+    print(
+        "Escriba SI para autorizar o NO para omitir."
+    )
+
+    respuesta = input(
+        "Autorizacion: "
+    ).strip().upper()
+
+    if respuesta == "SI":
+
+        return "SI"
+
+    return "NO"
+
+
+def borrar_contenido_directorio_seguro_kcd(
+    ruta
+):
+
+    liberado_bytes = 0
+    eliminados = 0
+    errores = 0
+
+    if not os.path.exists(
+        ruta
+    ):
+
+        return {
+            "liberado_mb": 0,
+            "eliminados": 0,
+            "errores": 0,
+            "resultado": "RUTA_NO_EXISTE"
+        }
+
+    for raiz, carpetas, archivos in os.walk(
+        ruta,
+        topdown=False
+    ):
+
+        for archivo in archivos:
+
+            ruta_archivo = os.path.join(
+                raiz,
+                archivo
+            )
+
+            try:
+
+                tamano = os.path.getsize(
+                    ruta_archivo
+                )
+
+                os.remove(
+                    ruta_archivo
+                )
+
+                liberado_bytes += tamano
+                eliminados += 1
+
+            except Exception:
+
+                errores += 1
+
+        for carpeta in carpetas:
+
+            ruta_carpeta = os.path.join(
+                raiz,
+                carpeta
+            )
+
+            try:
+
+                if not os.listdir(
+                    ruta_carpeta
+                ):
+
+                    os.rmdir(
+                        ruta_carpeta
+                    )
+
+            except Exception:
+
+                errores += 1
+
+    return {
+        "liberado_mb": convertir_bytes_a_mb_kcd(
+            liberado_bytes
+        ),
+        "eliminados": eliminados,
+        "errores": errores,
+        "resultado": "EJECUTADO"
+    }
+
+
+def limpiar_temporales_kcd_autorizado():
+
+    carpeta_temp = tempfile.gettempdir()
+
+    liberado_bytes = 0
+    eliminados = 0
+    errores = 0
+
+    try:
+
+        elementos = os.listdir(
+            carpeta_temp
+        )
+
+    except Exception:
+
+        elementos = []
+
+    for elemento in elementos:
+
+        nombre = elemento.lower()
+
+        if (
+            not nombre.startswith(
+                "kcd"
+            )
+            and "kcd" not in nombre
+        ):
+
+            continue
+
+        ruta = os.path.join(
+            carpeta_temp,
+            elemento
+        )
+
+        try:
+
+            if os.path.isfile(
+                ruta
+            ):
+
+                tamano = os.path.getsize(
+                    ruta
+                )
+
+                os.remove(
+                    ruta
+                )
+
+                liberado_bytes += tamano
+                eliminados += 1
+
+            elif os.path.isdir(
+                ruta
+            ):
+
+                resultado = borrar_contenido_directorio_seguro_kcd(
+                    ruta
+                )
+
+                liberado_bytes += resultado.get(
+                    "liberado_mb",
+                    0
+                ) * 1024 * 1024
+
+                try:
+
+                    if not os.listdir(
+                        ruta
+                    ):
+
+                        os.rmdir(
+                            ruta
+                        )
+
+                except Exception:
+
+                    pass
+
+                eliminados += resultado.get(
+                    "eliminados",
+                    0
+                )
+                errores += resultado.get(
+                    "errores",
+                    0
+                )
+
+        except Exception:
+
+            errores += 1
+
+    return {
+        "liberado_mb": convertir_bytes_a_mb_kcd(
+            liberado_bytes
+        ),
+        "eliminados": eliminados,
+        "errores": errores,
+        "resultado": "EJECUTADO"
+    }
+
+
+def obtener_rutas_cache_chrome_autorizadas_kcd():
+
+    base_chrome = obtener_chrome_user_data_kcd()
+
+    rutas = []
+
+    if not os.path.exists(
+        base_chrome
+    ):
+
+        return rutas
+
+    try:
+
+        perfiles = os.listdir(
+            base_chrome
+        )
+
+    except Exception:
+
+        return rutas
+
+    for perfil in perfiles:
+
+        ruta_perfil = os.path.join(
+            base_chrome,
+            perfil
+        )
+
+        if not os.path.isdir(
+            ruta_perfil
+        ):
+
+            continue
+
+        nombre = perfil.lower()
+
+        if not (
+            nombre == "default"
+            or nombre.startswith(
+                "profile"
+            )
+            or nombre == "guest profile"
+        ):
+
+            continue
+
+        posibles = [
+            os.path.join(
+                ruta_perfil,
+                "Cache"
+            ),
+            os.path.join(
+                ruta_perfil,
+                "Code Cache"
+            ),
+            os.path.join(
+                ruta_perfil,
+                "GPUCache"
+            ),
+            os.path.join(
+                ruta_perfil,
+                "Service Worker",
+                "CacheStorage"
+            )
+        ]
+
+        for ruta in posibles:
+
+            if (
+                os.path.exists(
+                    ruta
+                )
+                and ruta_segura_cache_chrome_kcd(
+                    ruta
+                )
+            ):
+
+                rutas.append(
+                    ruta
+                )
+
+    return rutas
+
+
+def limpiar_cache_chrome_autorizada_kcd(
+    accion
+):
+
+    rutas = []
+
+    if ":" in accion:
+
+        posible_ruta = accion.split(
+            ":",
+            1
+        )[1].strip()
+
+        if (
+            os.path.exists(
+                posible_ruta
+            )
+            and ruta_segura_cache_chrome_kcd(
+                posible_ruta
+            )
+        ):
+
+            rutas.append(
+                posible_ruta
+            )
+
+    if not rutas:
+
+        rutas = obtener_rutas_cache_chrome_autorizadas_kcd()
+
+    liberado_mb = 0
+    eliminados = 0
+    errores = 0
+
+    for ruta in rutas:
+
+        if not ruta_segura_cache_chrome_kcd(
+            ruta
+        ):
+
+            continue
+
+        resultado = borrar_contenido_directorio_seguro_kcd(
+            ruta
+        )
+
+        liberado_mb += resultado.get(
+            "liberado_mb",
+            0
+        )
+
+        eliminados += resultado.get(
+            "eliminados",
+            0
+        )
+
+        errores += resultado.get(
+            "errores",
+            0
+        )
+
+    return {
+        "liberado_mb": round(
+            liberado_mb,
+            2
+        ),
+        "eliminados": eliminados,
+        "errores": errores,
+        "resultado": "EJECUTADO"
+    }
+
+
+def ejecutar_accion_remediacion_kcd(
+    candidata
+):
+
+    accion = candidata.get(
+        "accion",
+        ""
+    ).lower()
+
+    if (
+        "temporales kcd" in accion
+        or "limpiar temporales" in accion
+    ):
+
+        return limpiar_temporales_kcd_autorizado()
+
+    if (
+        "cache de chrome" in accion
+        or "caché de chrome" in accion
+        or "chrome autorizada" in accion
+    ):
+
+        return limpiar_cache_chrome_autorizada_kcd(
+            candidata.get(
+                "accion",
+                ""
+            )
+        )
+
+    return {
+        "liberado_mb": 0,
+        "eliminados": 0,
+        "errores": 0,
+        "resultado": "SOLO_REGISTRO_MANUAL"
+    }
+
+
+def registrar_remediacion_autorizada_kcd(
+    candidata,
+    autorizacion,
+    resultado,
+    antes,
+    despues
+):
+
+    nombre_archivo = "remediacion_autorizada_kcd.csv"
+
+    existe_archivo = os.path.exists(
+        nombre_archivo
+    )
+
+    encabezados = [
+        "fecha",
+        "origen",
+        "accion",
+        "clasificacion",
+        "autorizacion",
+        "ejecutada",
+        "resultado",
+        "liberado_mb",
+        "eliminados",
+        "errores",
+        "antes_cpu",
+        "antes_ram",
+        "antes_disco",
+        "antes_espacio_libre",
+        "antes_ivk",
+        "despues_cpu",
+        "despues_ram",
+        "despues_disco",
+        "despues_espacio_libre",
+        "despues_ivk"
+    ]
+
+    ejecutada = "SI" if autorizacion == "SI" else "NO"
+
+    fila = [
+        datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        candidata.get(
+            "origen",
+            ""
+        ),
+        candidata.get(
+            "accion",
+            ""
+        ),
+        candidata.get(
+            "clasificacion",
+            ""
+        ),
+        autorizacion,
+        ejecutada,
+        resultado.get(
+            "resultado",
+            ""
+        ),
+        resultado.get(
+            "liberado_mb",
+            0
+        ),
+        resultado.get(
+            "eliminados",
+            0
+        ),
+        resultado.get(
+            "errores",
+            0
+        ),
+        antes.get(
+            "cpu",
+            0
+        ),
+        antes.get(
+            "ram",
+            0
+        ),
+        antes.get(
+            "disco",
+            0
+        ),
+        antes.get(
+            "espacio_libre_pct",
+            0
+        ),
+        antes.get(
+            "ivk",
+            0
+        ),
+        despues.get(
+            "cpu",
+            0
+        ),
+        despues.get(
+            "ram",
+            0
+        ),
+        despues.get(
+            "disco",
+            0
+        ),
+        despues.get(
+            "espacio_libre_pct",
+            0
+        ),
+        despues.get(
+            "ivk",
+            0
+        )
+    ]
+
+    with open(
+        nombre_archivo,
+        mode="a",
+        newline="",
+        encoding="utf-8"
+    ) as archivo:
+
+        escritor = csv.writer(
+            archivo
+        )
+
+        if not existe_archivo:
+
+            escritor.writerow(
+                encabezados
+            )
+
+        escritor.writerow(
+            fila
+        )
+
+
+def ejecutar_remediacion_autorizada_kcd():
+
+    print(
+        "\n[KCD BLOQUE 18] REMEDIACION INTELIGENTE AUTORIZADA"
+    )
+
+    print(
+        "Modo seguro: no ejecuta nada sin autorizacion explicita."
+    )
+
+    print(
+        "No borra perfiles, cookies, contrasenas, documentos, descargas ni AppData completo."
+    )
+
+    candidatas = generar_candidatas_remediacion_kcd()
+
+    mostrar_candidatas_remediacion_kcd(
+        candidatas
+    )
+
+    if not candidatas:
+
+        return {
+            "ejecutadas": 0,
+            "omitidas": 0,
+            "resultados": []
+        }
+
+    antes = medir_estado_remediacion_kcd(
+        "ANTES"
+    )
+
+    resultados = []
+    ejecutadas = 0
+    omitidas = 0
+
+    for candidata in candidatas:
+
+        autorizacion = solicitar_autorizacion_kcd(
+            candidata
+        )
+
+        if autorizacion != "SI":
+
+            resultado = {
+                "liberado_mb": 0,
+                "eliminados": 0,
+                "errores": 0,
+                "resultado": "NO_AUTORIZADA"
+            }
+
+            despues_parcial = medir_estado_remediacion_kcd(
+                "DESPUES"
+            )
+
+            registrar_remediacion_autorizada_kcd(
+                candidata,
+                autorizacion,
+                resultado,
+                antes,
+                despues_parcial
+            )
+
+            omitidas += 1
+
+            continue
+
+        resultado = ejecutar_accion_remediacion_kcd(
+            candidata
+        )
+
+        despues_parcial = medir_estado_remediacion_kcd(
+            "DESPUES"
+        )
+
+        registrar_remediacion_autorizada_kcd(
+            candidata,
+            autorizacion,
+            resultado,
+            antes,
+            despues_parcial
+        )
+
+        try:
+
+            registrar_accion_kcd(
+                "REMEDIACION_AUTORIZADA",
+                resultado.get(
+                    "resultado",
+                    ""
+                ),
+                candidata.get(
+                    "accion",
+                    ""
+                )
+            )
+
+        except Exception:
+
+            pass
+
+        resultados.append({
+            "candidata": candidata,
+            "resultado": resultado
+        })
+
+        ejecutadas += 1
+
+    print(
+        "\n[KCD REMEDIACION] Ejecutadas:"
+    )
+
+    print(
+        ejecutadas
+    )
+
+    print(
+        "[KCD REMEDIACION] Omitidas:"
+    )
+
+    print(
+        omitidas
+    )
+
+    validacion = None
+
+    try:
+
+        validacion = validar_resultados_kcd(
+            antes,
+            "REMEDIACION_AUTORIZADA_KCD"
+        )
+
+    except Exception as error:
+
+        print(
+            f"\n[KCD REMEDIACION] No se pudo ejecutar validacion Bloque 11: {error}"
+        )
+
+    return {
+        "ejecutadas": ejecutadas,
+        "omitidas": omitidas,
+        "resultados": resultados,
+        "validacion": validacion
+    }

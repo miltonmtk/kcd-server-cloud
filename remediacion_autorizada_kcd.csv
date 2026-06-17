@@ -1,0 +1,35 @@
+fecha,origen,accion,clasificacion,autorizacion,ejecutada,resultado,liberado_mb,eliminados,errores,antes_cpu,antes_ram,antes_disco,antes_espacio_libre,antes_ivk,despues_cpu,despues_ram,despues_disco,despues_espacio_libre,despues_ivk
+2026-06-17 08:24:36,KCD_BASE,Limpiar temporales KCD.,SEGURA,SI,SI,EJECUTADO,0.0,0,0,36.2,88.07,92.4,7.64,45.0,13.83,84.63,92.4,7.64,45.0
+2026-06-17 08:25:25,BLOQUE_10,Monitorear aplicaciones de alto consumo.,REQUIERE_AUTORIZACION,SI,SI,SOLO_REGISTRO_MANUAL,0,0,0,36.2,88.07,92.4,7.64,45.0,11.1,85.77,92.4,7.64,45.0
+2026-06-17 08:26:01,BLOQUE_10,Programar limpieza preventiva de almacenamiento.,REQUIERE_AUTORIZACION,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,12.73,86.5,92.4,7.64,45.0
+2026-06-17 08:26:16,BLOQUE_10,Preparar accion de liberacion de espacio para Bloque 10.,REQUIERE_AUTORIZACION,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,10.07,86.3,92.4,7.64,45.0
+2026-06-17 08:26:29,BLOQUE_10,Preparar remediacion con Bloque 10 y validar con Bloque 11.,REQUIERE_AUTORIZACION,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,8.8,86.03,92.4,7.64,45.0
+2026-06-17 08:26:34,BLOQUE_10,Revisar AppData Local y caches de aplicaciones. No borrar carpetas manualmente.,SOLO_MANUAL,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,9.77,85.9,92.4,7.64,45.0
+2026-06-17 08:26:55,BLOQUE_14,Evaluar ampliacion fisica de memoria RAM.,REQUIERE_AUTORIZACION,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,8.53,85.8,92.4,7.64,45.0
+2026-06-17 08:27:07,BLOQUE_14,Liberar espacio en disco mediante limpieza segura autorizada.,REQUIERE_AUTORIZACION,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,12.2,85.8,92.4,7.64,45.0
+2026-06-17 08:27:23,BLOQUE_14,Preparar optimizacion preventiva con Bloque 10 y validar con Bloque 11.,REQUIERE_AUTORIZACION,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,8.9,86.67,92.4,7.64,45.0
+2026-06-17 08:27:45,BLOQUE_14,Revisar saturacion de RAM y preparar plan de remediacion.,REQUIERE_AUTORIZACION,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,10.07,87.1,92.4,7.64,45.0
+2026-06-17 08:27:56,BLOQUE_14,Atender riesgo predictivo critico y preparar plan de mantenimiento.,REQUIERE_AUTORIZACION,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,24.67,88.5,92.4,7.64,45.0
+2026-06-17 08:28:09,BLOQUE_14,Atender alerta critica: Espacio libre critico (12.64%).,REQUIERE_AUTORIZACION,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,9.6,88.73,92.4,7.64,45.0
+2026-06-17 08:28:24,BLOQUE_14,Atender alerta critica: IVK bajo (45.0%).,REQUIERE_AUTORIZACION,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,13.53,88.37,92.4,7.64,45.0
+2026-06-17 08:28:40,BLOQUE_14,Preparar accion de liberacion de espacio para Bloque 10.,REQUIERE_AUTORIZACION,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,14.07,88.3,92.4,7.64,45.0
+2026-06-17 08:28:49,BLOQUE_14,Preparar remediacion con Bloque 10 y validar con Bloque 11.,REQUIERE_AUTORIZACION,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,9.87,88.3,92.4,7.64,45.0
+2026-06-17 08:29:07,BLOQUE_14,Monitorear aplicaciones de alto consumo.,REQUIERE_AUTORIZACION,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,7.47,88.27,92.4,7.64,45.0
+2026-06-17 08:29:18,BLOQUE_14,Programar limpieza preventiva de almacenamiento.,REQUIERE_AUTORIZACION,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,9.67,88.17,92.4,7.64,45.0
+2026-06-17 08:29:34,BLOQUE_14,Realizar auditoria preventiva general KCD.,REQUIERE_AUTORIZACION,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,9.27,88.1,92.4,7.64,45.0
+2026-06-17 08:29:54,BLOQUE_17,Limpiar cache de Chrome solo con autorizacion del usuario.,REQUIERE_AUTORIZACION,SI,SI,EJECUTADO,316.56,3685,11,36.2,88.07,92.4,7.64,45.0,7.23,88.6,92.1,7.91,45.0
+2026-06-17 08:29:59,BLOQUE_17,No borrar perfiles de Chrome manualmente.,NO_RECOMENDADA,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,8.9,88.57,92.1,7.91,45.0
+2026-06-17 08:30:05,BLOQUE_17,"Revisar AppData Local antes de limpiar. Priorizar caches, no datos del usuario.",SOLO_MANUAL,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,10.2,88.2,92.1,7.91,45.0
+2026-06-17 08:30:11,BLOQUE_17,"Revisar proyectos grandes, entornos virtuales y carpetas temporales.",SOLO_MANUAL,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,11.3,87.63,92.1,7.91,45.0
+2026-06-17 08:30:39,BLOQUE_17,Preparar accion segura para Bloque 10 sin ejecutar limpieza automatica.,REQUIERE_AUTORIZACION,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,7.9,87.1,92.1,7.91,45.0
+2026-06-17 08:30:45,BLOQUE_17_CHROME,Limpiar cache de Chrome autorizada: C:\Users\usuario\AppData\Local\Google\Chrome\User Data\Default\Code Cache,NO_RECOMENDADA,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,10.23,87.1,92.1,7.91,45.0
+2026-06-17 08:30:50,BLOQUE_17_CHROME,Limpiar cache de Chrome autorizada: C:\Users\usuario\AppData\Local\Google\Chrome\User Data\Default\Service Worker\CacheStorage,NO_RECOMENDADA,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,10.13,87.1,92.1,7.91,45.0
+2026-06-17 08:30:55,BLOQUE_17_CHROME,Limpiar cache de Chrome autorizada: C:\Users\usuario\AppData\Local\Google\Chrome\User Data\Default\Cache,NO_RECOMENDADA,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,10.03,87.1,92.1,7.91,45.0
+2026-06-17 08:31:00,BLOQUE_17_CHROME,Limpiar cache de Chrome autorizada: C:\Users\usuario\AppData\Local\Google\Chrome\User Data\Profile 1\Cache,NO_RECOMENDADA,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,10.57,87.1,92.1,7.91,45.0
+2026-06-17 08:31:05,BLOQUE_17_CHROME,Limpiar cache de Chrome autorizada: C:\Users\usuario\AppData\Local\Google\Chrome\User Data\Profile 5\Cache,NO_RECOMENDADA,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,9.53,87.17,92.1,7.91,45.0
+2026-06-17 08:31:10,BLOQUE_17_CHROME,Limpiar cache de Chrome autorizada: C:\Users\usuario\AppData\Local\Google\Chrome\User Data\Default\GPUCache,NO_RECOMENDADA,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,12.33,87.2,92.1,7.91,45.0
+2026-06-17 08:31:15,BLOQUE_17_CHROME,Limpiar cache de Chrome autorizada: C:\Users\usuario\AppData\Local\Google\Chrome\User Data\Profile 1\Code Cache,NO_RECOMENDADA,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,10.53,87.2,92.1,7.91,45.0
+2026-06-17 08:31:20,BLOQUE_17_CHROME,Limpiar cache de Chrome autorizada: C:\Users\usuario\AppData\Local\Google\Chrome\User Data\Profile 1\GPUCache,NO_RECOMENDADA,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,8.87,87.2,92.1,7.91,45.0
+2026-06-17 08:31:25,BLOQUE_17_CHROME,Limpiar cache de Chrome autorizada: C:\Users\usuario\AppData\Local\Google\Chrome\User Data\Profile 5\GPUCache,NO_RECOMENDADA,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,12.1,87.2,92.1,7.91,45.0
+2026-06-17 08:31:30,BLOQUE_17_CHROME,Limpiar cache de Chrome autorizada: C:\Users\usuario\AppData\Local\Google\Chrome\User Data\Profile 5\Code Cache,NO_RECOMENDADA,NO,NO,NO_AUTORIZADA,0,0,0,36.2,88.07,92.4,7.64,45.0,12.03,87.3,92.1,7.91,45.0
+2026-06-17 08:31:48,KCD_CHROME,Limpiar cache de Chrome autorizada.,REQUIERE_AUTORIZACION,SI,SI,EJECUTADO,0.0,0,11,36.2,88.07,92.4,7.64,45.0,10.43,87.5,92.1,7.91,45.0
